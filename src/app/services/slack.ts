@@ -584,9 +584,19 @@ export class SlackService {
    */
   connectSocketMode(): Observable<{ success: boolean; message: string; error?: string }> {
     const socketUrl = this.getSlackSocketUrl();
+    const botToken = this.getToken();
+    const appToken = this.getSocketToken();
+    
+    if (!botToken || !appToken) {
+      const errorMessage = 'Slack Bot Token and Socket Mode Token are required';
+      this.toastService.error(errorMessage);
+      return throwError(() => new Error(errorMessage));
+    }
     
     return this.http.post<{ success: boolean; message: string; error?: string }>(socketUrl, {
-      action: 'connect'
+      action: 'connect',
+      botToken: botToken,
+      appToken: appToken
     }).pipe(
       map(response => {
         if (response.success) {

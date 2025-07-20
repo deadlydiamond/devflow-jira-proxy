@@ -1,12 +1,5 @@
 const { WebClient } = require('@slack/web-api');
 
-// Slack configuration
-const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-your-bot-token-here';
-const SLACK_APP_TOKEN = process.env.SLACK_APP_TOKEN || 'xapp-your-app-token-here';
-
-// Initialize Slack client
-const webClient = new WebClient(SLACK_BOT_TOKEN);
-
 // In-memory storage for events (in production, you'd use a database like Redis or MongoDB)
 let recentEvents = [];
 const MAX_EVENTS = 100;
@@ -18,6 +11,7 @@ const MAX_DEPLOYMENT_EVENTS = 50;
 // Connection status
 let isConnected = false;
 let lastPollTime = null;
+let webClient = null;
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -32,12 +26,24 @@ module.exports = async (req, res) => {
 
   try {
     if (req.method === 'POST') {
-      const { action } = req.body;
+      const { action, botToken, appToken } = req.body;
       
       if (action === 'connect') {
         // Initialize polling-based connection
         try {
           console.log('🔌 Initializing Slack polling connection...');
+          
+          // Validate tokens
+          if (!botToken || !botToken.startsWith('xoxb-')) {
+            throw new Error('Invalid Slack Bot Token provided');
+          }
+          
+          if (!appToken || !appToken.startsWith('xapp-')) {
+            throw new Error('Invalid Slack App Token provided');
+          }
+          
+          // Initialize Slack client with the provided token
+          webClient = new WebClient(botToken);
           
           // Test the connection by making a simple API call
           const authTest = await webClient.auth.test();
@@ -59,6 +65,7 @@ module.exports = async (req, res) => {
         } catch (error) {
           console.error('❌ Failed to connect to Slack API:', error);
           isConnected = false;
+          webClient = null;
           res.status(500).json({ 
             success: false, 
             error: error.message || 'Failed to connect to Slack API'
@@ -69,6 +76,7 @@ module.exports = async (req, res) => {
         // Disconnect polling
         isConnected = false;
         lastPollTime = null;
+        webClient = null;
         res.status(200).json({ success: true, message: 'Disconnected from Slack API' });
         
       } else if (action === 'status') {
@@ -83,7 +91,7 @@ module.exports = async (req, res) => {
         
       } else if (action === 'poll') {
         // Manual polling trigger
-        if (!isConnected) {
+        if (!isConnected || !webClient) {
           return res.status(400).json({ error: 'Not connected to Slack API' });
         }
         
