@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, interval, startWith, switchMap, catchError, of, from } from 'rxjs';
-import { SlackService } from './slack';
-import { ToastService } from './toast';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, timer, of } from 'rxjs';
+import { catchError, map, switchMap, retryWhen, take, tap } from 'rxjs/operators';
 import { LocalStorageService } from './local-storage';
-import { SlackSocketService, SlackEvent } from './slack-socket.service';
+import { ToastService } from './toast';
 import { JiraService } from './jira';
+import { SlackService } from './slack';
 
 export interface SlackDeploymentMessage {
   id: string;
@@ -32,7 +33,6 @@ export class SlackMessageService {
   private readonly slackService = inject(SlackService);
   private readonly toastService = inject(ToastService);
   private readonly localStorage = inject(LocalStorageService);
-  private readonly socketService = inject(SlackSocketService);
   private readonly jiraService = inject(JiraService);
 
   private readonly _messages = new BehaviorSubject<SlackDeploymentMessage[]>([]);
@@ -52,7 +52,7 @@ export class SlackMessageService {
   }
 
   /**
-   * Start listening for Slack events via Socket Mode
+   * Start listening for Slack events via polling
    */
   private startListening(): void {
     if (!this.slackService.getToken() || !this.slackService.getChannelId()) {
@@ -61,54 +61,22 @@ export class SlackMessageService {
     }
 
     this._isListening.next(true);
-    console.log('🔌 Starting Slack Socket Mode listener...');
+    console.log('🔌 Starting Slack polling listener...');
 
-    // Subscribe to Socket Mode events
-    this.socketService.events$.subscribe(events => {
-      console.log(`📨 Received ${events.length} events from Socket Mode`);
-      console.log('📨 Events:', events);
-      
-      // Process new events
-      const newEvents = events.filter(event => {
-        console.log(`🔍 Checking event:`, event);
-        console.log(`🔍 Event channel: ${event.channel}, configured channel: ${this.slackService.getChannelId()}`);
-        
-        // Filter for deployment messages in the configured channel
-        const isCorrectChannel = event.channel === this.slackService.getChannelId();
-        const isDeployment = this.isDeploymentMessage(event);
-        
-        console.log(`🔍 Channel match: ${isCorrectChannel}, Deployment message: ${isDeployment}`);
-        
-        return isCorrectChannel && isDeployment;
-      });
-
-      if (newEvents.length > 0) {
-        console.log(`🚀 Found ${newEvents.length} deployment events`);
-        const deploymentMessages = newEvents.map(event => this.parseDeploymentMessage(event))
-          .filter(msg => msg !== null) as SlackDeploymentMessage[];
-        
-        console.log(`📋 Parsed deployment messages:`, deploymentMessages);
-        this.processNewMessages(deploymentMessages);
-      } else {
-        console.log('📨 No deployment events found in received events');
-      }
-    });
-
-    // Also subscribe to connection status
-    this.socketService.connectionStatus$.subscribe(status => {
-      console.log(`🔌 Socket Mode status: ${status}`);
-      if (status === 'connected') {
-        this.toastService.success('Connected to Slack Socket Mode');
-      } else if (status === 'failed') {
-        this.toastService.error('Failed to connect to Slack Socket Mode');
-      }
-    });
+    // Start polling for messages every 30 seconds
+    timer(0, this.pollingInterval).pipe(
+      switchMap(() => this.refreshMessages()),
+      catchError(error => {
+        console.error('Polling error:', error);
+        return of(null);
+      })
+    ).subscribe();
   }
 
   /**
    * Check if message is a deployment message
    */
-  private isDeploymentMessage(message: SlackEvent): boolean {
+  private isDeploymentMessage(message: any): boolean {
     let text = '';
     
     // Handle different message types
@@ -163,7 +131,7 @@ export class SlackMessageService {
   /**
    * Parse a single deployment message
    */
-  private parseDeploymentMessage(message: SlackEvent): SlackDeploymentMessage | null {
+  private parseDeploymentMessage(message: any): SlackDeploymentMessage | null {
     let text = '';
     
     // Handle different message types
@@ -720,16 +688,17 @@ export class SlackMessageService {
   }
 
   /**
-   * Get socket connection status
+   * Get polling status
    */
   getSocketStatus(): string {
-    return this.socketService.getConnectionStatus();
+    return this._isListening.value ? 'Connected (Polling)' : 'Disconnected';
   }
 
   /**
-   * Reconnect to Socket Mode
+   * Reconnect polling
    */
   reconnectSocket(): void {
-    this.socketService.reconnect();
+    console.log('🔄 Reconnecting Slack polling...');
+    this.startListening();
   }
 } 

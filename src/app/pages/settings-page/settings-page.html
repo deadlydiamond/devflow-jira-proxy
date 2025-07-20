@@ -449,10 +449,7 @@
           </div>
         </div>
         
-        <div *ngIf="socketModeStats" class="text-xs text-gray-600 dark:text-text-light/70">
-          <p>Recent Events: {{ socketModeStats.recentEventsCount }} | Deployment Events: {{ socketModeStats.deploymentEventsCount }}</p>
-          <p *ngIf="socketModeStats.lastPollTime">Last Poll: {{ socketModeStats.lastPollTime | date:'short' }}</p>
-        </div>
+        <!-- Polling status will be shown in the polling controls section -->
       </div>
 
       <!-- Polling Controls -->

@@ -438,7 +438,6 @@ export class SettingsPageComponent implements OnInit {
     }
 
     this.socketModeStatus = 'connecting';
-    this.slackService.setBotToken(this.botToken);
     this.slackService.setSocketToken(this.socketModeToken);
     
     this.slackService.connectSocketMode().subscribe({
@@ -485,28 +484,25 @@ export class SettingsPageComponent implements OnInit {
 
   checkSocketModeStatus(): void {
     this.socketModeStatus = 'checking';
-    this.socketModeMessage = 'Checking Socket Mode status...';
+    this.socketModeMessage = 'Checking Slack polling status...';
     
     this.slackService.getSocketModeStatus().subscribe({
       next: (status) => {
-        this.socketModeToken = status.botToken || ''; // Update token
-        this.botToken = status.botToken || ''; // Update bot token
-        
         if (status.connected) {
           this.socketModeStatus = 'connected';
-          this.socketModeMessage = `Connected to Socket Mode. Recent events: ${status.recentEventsCount}, Deployment events: ${status.deploymentEventsCount}`;
+          this.socketModeMessage = `Connected to Slack polling. Recent events: ${status.recentEventsCount}, Deployment events: ${status.deploymentEventsCount}`;
         } else if (status.hasClient) {
           this.socketModeStatus = 'connecting';
-          this.socketModeMessage = 'Socket Mode client exists but not connected';
+          this.socketModeMessage = 'Slack polling client exists but not connected';
         } else {
           this.socketModeStatus = 'idle';
-          this.socketModeMessage = 'Socket Mode not connected';
+          this.socketModeMessage = 'Slack polling not connected';
         }
       },
       error: (error) => {
         this.socketModeStatus = 'error';
-        this.socketModeMessage = 'Failed to check Socket Mode status';
-        console.error('Socket mode status check error:', error);
+        this.socketModeMessage = 'Failed to check Slack polling status';
+        console.error('Slack polling status check error:', error);
       }
     });
   }
