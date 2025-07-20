@@ -654,7 +654,8 @@ export class SlackService {
           connected: false,
           hasClient: false,
           recentEventsCount: 0,
-          deploymentEventsCount: 0
+          deploymentEventsCount: 0,
+          lastPollTime: undefined
         });
       })
     );
@@ -693,7 +694,8 @@ export class SlackService {
           events: [],
           total: 0,
           type,
-          socketModeConnected: false
+          socketModeConnected: false,
+          lastPollTime: undefined
         });
       })
     );

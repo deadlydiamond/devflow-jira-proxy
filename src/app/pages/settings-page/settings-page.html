@@ -387,7 +387,14 @@
 
       <!-- Socket Mode Connection -->
       <div class="border-t border-gray-200 dark:border-border pt-4 mt-4">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Socket Mode Connection</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Slack Event Polling</h4>
+        
+        <div class="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+          <p class="text-blue-800 dark:text-blue-200 text-xs">
+            <strong>Note:</strong> This uses polling-based event detection since Vercel serverless functions cannot maintain WebSocket connections. 
+            Events are detected by polling the Slack API periodically.
+          </p>
+        </div>
         
         <div class="flex items-center space-x-4 mb-3">
           <app-button 
@@ -398,7 +405,7 @@
           >
             <span *ngIf="socketModeStatus === 'connecting'">Connecting...</span>
             <span *ngIf="socketModeStatus === 'connected'">Connected</span>
-            <span *ngIf="socketModeStatus !== 'connecting' && socketModeStatus !== 'connected'">Connect Socket Mode</span>
+            <span *ngIf="socketModeStatus !== 'connecting' && socketModeStatus !== 'connected'">Connect Event Polling</span>
           </app-button>
           
           <app-button 
@@ -444,6 +451,7 @@
         
         <div *ngIf="socketModeStats" class="text-xs text-gray-600 dark:text-text-light/70">
           <p>Recent Events: {{ socketModeStats.recentEventsCount }} | Deployment Events: {{ socketModeStats.deploymentEventsCount }}</p>
+          <p *ngIf="socketModeStats.lastPollTime">Last Poll: {{ socketModeStats.lastPollTime | date:'short' }}</p>
         </div>
       </div>
     </div>
