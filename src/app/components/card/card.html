@@ -1,0 +1,40 @@
+<div 
+  class="bg-white dark:bg-card rounded-xl transition-all duration-200 mb-6"
+  [class.border]="border"
+  [class.border-gray-200]="border"
+  [class.dark:border-border]="border"
+  [class.shadow-none]="shadow === 'none'"
+  [class.shadow-sm]="shadow === 'sm'"
+  [class.shadow-md]="shadow === 'md'"
+  [class.shadow-lg]="shadow === 'lg'"
+  [class.hover:shadow-lg]="hover"
+  [class.hover:-translate-y-1]="hover"
+>
+  <!-- Header -->
+  <div 
+    *ngIf="title || subtitle"
+    class="px-6 py-4 border-b border-gray-200 dark:border-border"
+    [class.px-4]="padding === 'sm'"
+    [class.px-8]="padding === 'lg'"
+    [class.py-3]="padding === 'sm'"
+    [class.py-6]="padding === 'lg'"
+  >
+    <h3 *ngIf="title" class="text-lg font-semibold text-gray-900 dark:text-text-light">
+      {{ title }}
+    </h3>
+    <p *ngIf="subtitle" class="text-sm text-gray-600 dark:text-text-light/70 mt-1">
+      {{ subtitle }}
+    </p>
+  </div>
+
+  <!-- Content -->
+  <div 
+    class="px-6 py-4"
+    [class.px-4]="padding === 'sm'"
+    [class.px-8]="padding === 'lg'"
+    [class.py-3]="padding === 'sm'"
+    [class.py-6]="padding === 'lg'"
+  >
+    <ng-content></ng-content>
+  </div>
+</div>

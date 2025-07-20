@@ -1,0 +1,112 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-surface border border-border rounded-lg max-w-md w-full">
+    <!-- Dialog Header -->
+    <div class="flex items-center justify-between p-6 border-b border-border">
+      <div>
+        <h3 class="text-lg font-semibold text-text-light">Link Deployment to Jira</h3>
+        <p class="text-sm text-text-light/70 mt-1">Connect this deployment to a Jira issue</p>
+      </div>
+      <button
+        (click)="onCancel()"
+        class="text-text-light/50 hover:text-text-light transition-colors">
+        ✕
+      </button>
+    </div>
+
+    <!-- Dialog Content -->
+    <div class="p-6 space-y-4">
+      <!-- Deployment Info -->
+      <div *ngIf="data" class="bg-surface/50 p-4 rounded-lg border border-border">
+        <h4 class="font-medium text-text-light mb-2">Deployment Details</h4>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-text-light/70">Job Name:</span>
+            <span class="text-text-light font-medium">{{ getJobName() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">Job ID:</span>
+            <span class="text-text-light font-mono">{{ getJobId() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">Status:</span>
+            <span class="text-text-light">{{ getDeploymentStatus() }}</span>
+          </div>
+          <div *ngIf="getDeploymentUrl()" class="flex justify-between">
+            <span class="text-text-light/70">Deployment URL:</span>
+            <a [href]="getDeploymentUrl()" 
+               target="_blank"
+               class="text-primary hover:text-primary/80 text-xs">
+              View
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jira Configuration Warning -->
+      <div *ngIf="!isJiraConfigured()" 
+           class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+        <div class="flex items-center space-x-2">
+          <span class="text-yellow-600">⚠️</span>
+          <span class="text-sm text-yellow-600">
+            Jira is not configured. Please configure Jira in Settings first.
+          </span>
+        </div>
+      </div>
+
+      <!-- Jira Issue Input -->
+      <div class="space-y-2">
+        <label for="jiraId" class="block text-sm font-medium text-text-light">
+          Jira Issue ID
+        </label>
+        <input
+          id="jiraId"
+          type="text"
+          [(ngModel)]="jiraId"
+          (keypress)="onKeyPress($event)"
+          placeholder="e.g., PROJ-123"
+          class="w-full p-3 bg-surface border border-border rounded-lg text-text-light placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          [class.border-red-500]="jiraId && !isValidJiraId()"
+          [disabled]="!isJiraConfigured() || isSubmitting">
+        
+        <!-- Validation Message -->
+        <div *ngIf="jiraId && !isValidJiraId()" class="text-sm text-red-600">
+          Please enter a valid Jira issue ID (e.g., PROJ-123)
+        </div>
+        
+        <!-- Help Text -->
+        <div class="text-xs text-text-light/50">
+          Enter the Jira issue key (e.g., PROJ-123) that this deployment relates to.
+        </div>
+      </div>
+
+      <!-- Auto Update Info -->
+      <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+        <div class="flex items-center space-x-2">
+          <span class="text-blue-600">ℹ️</span>
+          <span class="text-sm text-blue-600">
+            When this deployment completes successfully, the Jira issue will automatically be moved to "Ready for Test".
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Footer -->
+    <div class="flex items-center justify-end space-x-3 p-6 border-t border-border">
+      <button
+        (click)="onCancel()"
+        [disabled]="isSubmitting"
+        class="btn btn-outline">
+        Cancel
+      </button>
+      
+      <button
+        (click)="onSubmit()"
+        [disabled]="!isValidJiraId() || !isJiraConfigured() || isSubmitting"
+        class="btn btn-primary"
+        [class.opacity-50]="!isValidJiraId() || !isJiraConfigured() || isSubmitting">
+        <span *ngIf="!isSubmitting">🔗 Link Deployment</span>
+        <span *ngIf="isSubmitting">⏳ Linking...</span>
+      </button>
+    </div>
+  </div>
+</div> 

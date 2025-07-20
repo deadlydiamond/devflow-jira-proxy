@@ -1,0 +1,298 @@
+<div class="space-y-6">
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+    <div class="flex items-center space-x-2">
+      <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-red-800 dark:text-red-200">{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Task Input Section -->
+  <app-card title="Task Input" subtitle="Enter your task details for AI assistance">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          Task Title
+        </label>
+        <div class="flex space-x-2">
+          <input
+            type="text"
+            [(ngModel)]="taskTitle"
+            placeholder="e.g., Add user authentication with JWT"
+            class="flex-1 p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          />
+          <app-button 
+            (click)="improveTaskTitle()"
+            [disabled]="isImprovingTitle || !taskTitle.trim()"
+            variant="secondary"
+            class="whitespace-nowrap"
+          >
+            <span *ngIf="isImprovingTitle">Improving...</span>
+            <span *ngIf="!isImprovingTitle">✨ Improve</span>
+          </app-button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          Task Description
+        </label>
+        <textarea
+          [(ngModel)]="taskDescription"
+          placeholder="Describe the task in detail..."
+          rows="3"
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          User Story (for subtask generation)
+        </label>
+        <textarea
+          [(ngModel)]="userStory"
+          placeholder="As a user, I want to... so that..."
+          rows="2"
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+        ></textarea>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- AI Features Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Time Estimation -->
+    <app-card title="⏱️ Time Estimation" subtitle="Get AI-powered time estimates">
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <app-button 
+            (click)="estimateTaskTime()"
+            [disabled]="isEstimatingTime || !taskTitle.trim()"
+            variant="primary"
+            class="flex-1"
+          >
+            <span *ngIf="isEstimatingTime">Estimating...</span>
+            <span *ngIf="!isEstimatingTime">⚡ Estimate Time</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="estimatedTime" class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-green-800 dark:text-green-200 font-medium">Estimated Time:</span>
+            <button 
+              (click)="copyToClipboard(estimatedTime)"
+              class="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+            >
+              📋 Copy
+            </button>
+          </div>
+          <p class="text-green-700 dark:text-green-300 mt-1">{{ estimatedTime }}</p>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- Commit Message Generation -->
+    <app-card title="📝 Commit Message" subtitle="Generate conventional commit messages">
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <app-button 
+            (click)="generateCommitMessage()"
+            [disabled]="isGeneratingCommit || !taskTitle.trim()"
+            variant="primary"
+            class="flex-1"
+          >
+            <span *ngIf="isGeneratingCommit">Generating...</span>
+            <span *ngIf="!isGeneratingCommit">🔧 Generate Commit</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="commitMessage" class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-blue-800 dark:text-blue-200 font-medium">Commit Message:</span>
+            <button 
+              (click)="copyToClipboard(commitMessage)"
+              class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            >
+              📋 Copy
+            </button>
+          </div>
+          <p class="text-blue-700 dark:text-blue-300 mt-1 font-mono text-sm">{{ commitMessage }}</p>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- Subtask Generation -->
+    <app-card title="📋 Subtask Generation" subtitle="Break down user stories into subtasks">
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <app-button 
+            (click)="generateSubtasks()"
+            [disabled]="isGeneratingSubtasks || !userStory.trim()"
+            variant="primary"
+            class="flex-1"
+          >
+            <span *ngIf="isGeneratingSubtasks">Generating...</span>
+            <span *ngIf="!isGeneratingSubtasks">🔨 Generate Subtasks</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="generatedSubtasks.length > 0" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-text-light font-medium">Generated Subtasks:</span>
+            <button 
+              (click)="copyToClipboard(generatedSubtasks.join('\n'))"
+              class="text-gray-600 dark:text-text-light/70 hover:text-gray-700 dark:hover:text-text-light"
+            >
+              📋 Copy All
+            </button>
+          </div>
+          <div class="space-y-2">
+            <div 
+              *ngFor="let subtask of generatedSubtasks; let i = index"
+              class="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-gray-700 dark:text-text-light">{{ i + 1 }}. {{ subtask }}</span>
+                <button 
+                  (click)="copyToClipboard(subtask)"
+                  class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- Test Case Generation -->
+    <app-card title="🧪 Test Cases" subtitle="Generate test cases from task description">
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <app-button 
+            (click)="generateTestCases()"
+            [disabled]="isGeneratingTests || !taskDescription.trim()"
+            variant="primary"
+            class="flex-1"
+          >
+            <span *ngIf="isGeneratingTests">Generating...</span>
+            <span *ngIf="!isGeneratingTests">🧪 Generate Tests</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="testCases.length > 0" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-text-light font-medium">Test Cases:</span>
+            <button 
+              (click)="copyToClipboard(testCases.join('\n'))"
+              class="text-gray-600 dark:text-text-light/70 hover:text-gray-700 dark:hover:text-text-light"
+            >
+              📋 Copy All
+            </button>
+          </div>
+          <div class="space-y-2">
+            <div 
+              *ngFor="let testCase of testCases; let i = index"
+              class="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-yellow-800 dark:text-yellow-200">{{ i + 1 }}. {{ testCase }}</span>
+                <button 
+                  (click)="copyToClipboard(testCase)"
+                  class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- Code Review Checklist -->
+    <app-card title="🔍 Code Review Checklist" subtitle="Generate review checklist for tasks">
+      <div class="space-y-4">
+        <div class="flex space-x-2">
+          <app-button 
+            (click)="generateCodeReviewChecklist()"
+            [disabled]="isGeneratingChecklist || !taskTitle.trim()"
+            variant="primary"
+            class="flex-1"
+          >
+            <span *ngIf="isGeneratingChecklist">Generating...</span>
+            <span *ngIf="!isGeneratingChecklist">🔍 Generate Checklist</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="codeReviewChecklist.length > 0" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-text-light font-medium">Review Checklist:</span>
+            <button 
+              (click)="copyToClipboard(codeReviewChecklist.join('\n'))"
+              class="text-gray-600 dark:text-text-light/70 hover:text-gray-700 dark:hover:text-text-light"
+            >
+              📋 Copy All
+            </button>
+          </div>
+          <div class="space-y-2">
+            <div 
+              *ngFor="let item of codeReviewChecklist; let i = index"
+              class="p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-purple-800 dark:text-purple-200">{{ i + 1 }}. {{ item }}</span>
+                <button 
+                  (click)="copyToClipboard(item)"
+                  class="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- Improved Title -->
+    <app-card title="✨ Improved Title" subtitle="Get a better version of your task title">
+      <div class="space-y-4">
+        <div *ngIf="improvedTitle" class="p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-indigo-800 dark:text-indigo-200 font-medium">Improved Title:</span>
+            <div class="flex space-x-2">
+              <button 
+                (click)="copyToClipboard(improvedTitle)"
+                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+              >
+                📋 Copy
+              </button>
+              <button 
+                (click)="applyImprovedTitle()"
+                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+              >
+                ✅ Apply
+              </button>
+            </div>
+          </div>
+          <p class="text-indigo-700 dark:text-indigo-300 mt-1">{{ improvedTitle }}</p>
+        </div>
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex justify-end space-x-4">
+    <app-button 
+      (click)="clearResults()"
+      variant="secondary"
+    >
+      Clear Results
+    </app-button>
+  </div>
+</div> 
+ 

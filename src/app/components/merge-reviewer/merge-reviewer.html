@@ -1,0 +1,459 @@
+<div class="space-y-6">
+
+
+  <!-- Header -->
+  <div class="bg-surface border border-border rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-text-light mb-4">🔍 Merge Reviewer</h2>
+    <p class="text-text-light/70 mb-4">
+      Analyze your code for common issues before merging. Paste a GitHub URL or file content to review.
+    </p>
+    
+    <!-- URL Input -->
+    <div class="space-y-4">
+      <!-- GitLab MR URL Input -->
+      <div>
+        <label class="block text-sm font-medium text-text-light/70 mb-2">GitLab Merge Request URL</label>
+        <div class="flex gap-2">
+          <input
+            [(ngModel)]="gitlabUrl"
+            placeholder="https://gitlab.com/whitehelmetxyz/WhiteHelmet-FrontEnd/-/merge_requests/2462"
+            class="flex-1 p-3 bg-surface border border-border rounded-lg text-text-light placeholder-text-light/50"
+          />
+          <button
+            (click)="analyzeGitLabMR(gitlabUrl)"
+            [disabled]="isLoadingGitLab || !gitlabUrl.trim()"
+            class="btn btn-primary">
+            <span *ngIf="!isLoadingGitLab">🔍 Load MR</span>
+            <span *ngIf="isLoadingGitLab">⏳ Loading...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual Content Input -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-text-light/70 mb-2">Original Content</label>
+          <textarea
+            [(ngModel)]="originalContent"
+            (ngModelChange)="setOriginalContent($event)"
+            placeholder="Paste original file content here..."
+            class="w-full h-32 p-3 bg-surface border border-border rounded-lg text-text-light placeholder-text-light/50 resize-none"
+          ></textarea>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-text-light/70 mb-2">Modified Content</label>
+          <textarea
+            [(ngModel)]="inputContent"
+            placeholder="Paste modified file content here..."
+            class="w-full h-32 p-3 bg-surface border border-border rounded-lg text-text-light placeholder-text-light/50 resize-none"
+          ></textarea>
+        </div>
+      </div>
+      
+      <div class="flex gap-3">
+        <button
+          (click)="analyzeContent()"
+          [disabled]="isAnalyzing || !inputContent.trim()"
+          class="btn btn-primary">
+          <span *ngIf="!isAnalyzing">🔍 Analyze Code</span>
+          <span *ngIf="isAnalyzing">⏳ Analyzing...</span>
+        </button>
+        
+        <button
+          (click)="performAiReview()"
+          [disabled]="isAiReviewing || !inputContent.trim()"
+          class="btn btn-info">
+          <span *ngIf="!isAiReviewing">🤖 AI Review</span>
+          <span *ngIf="isAiReviewing">⏳ AI Reviewing...</span>
+        </button>
+        
+        <button
+          (click)="toggleDiff()"
+          [disabled]="!originalContent || !inputContent"
+          class="btn btn-secondary">
+          <span *ngIf="!showDiff">📊 Show Diff</span>
+          <span *ngIf="showDiff">📊 Hide Diff</span>
+        </button>
+        
+        <button
+          (click)="clearResults()"
+          [disabled]="!hasResults"
+          class="btn btn-secondary">
+          🗑️ Clear Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitLab MR Info -->
+  <div *ngIf="gitlabMR" class="bg-surface border border-border rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-text-light mb-4 flex items-center">
+      📋 GitLab Merge Request Info
+    </h3>
+    
+    <!-- Commit Summary Banner -->
+    <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-6">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ gitlabMR.commits_count }}</div>
+            <div class="text-xs text-blue-600 dark:text-blue-400">Commits</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ gitlabMR.changes_count }}</div>
+            <div class="text-xs text-purple-600 dark:text-purple-400">File Changes</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-medium text-text-light">MR #{{ gitlabMR.iid }}</div>
+          <div class="text-xs text-text-light/70">{{ gitlabMR.state }}</div>
+          <div *ngIf="gitlabMR.state === 'merged'" class="text-xs text-green-600 dark:text-green-400 mt-1">
+            ✅ Approved & Merged
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <h4 class="font-medium text-text-light mb-2">{{ gitlabMR.title }}</h4>
+        <p class="text-sm text-text-light/70 mb-3">{{ gitlabMR.description }}</p>
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between">
+            <span class="text-text-light/70">MR ID:</span>
+            <span class="text-text-light font-mono">#{{ gitlabMR.iid }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">State:</span>
+            <span class="px-2 py-1 rounded text-xs"
+                  [class]="gitlabMR.state === 'opened' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+              {{ gitlabMR.state }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">Source Branch:</span>
+            <span class="text-text-light font-mono">{{ gitlabMR.source_branch }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">Target Branch:</span>
+            <span class="text-text-light font-mono">{{ gitlabMR.target_branch }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-light/70">API Status:</span>
+            <span *ngIf="hasGitLabToken" class="text-green-600 dark:text-green-400 text-xs">✅ Connected to GitLab API</span>
+            <span *ngIf="!hasGitLabToken" class="text-yellow-600 dark:text-yellow-400 text-xs">⚠️ API Token Required</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col justify-end">
+        <a
+          [href]="gitlabMR.web_url"
+          target="_blank"
+          class="btn btn-secondary inline-flex items-center justify-center">
+          🔗 View in GitLab
+        </a>
+      </div>
+    </div>
+    
+    <!-- Action Buttons - Only show if MR is not merged -->
+    <div *ngIf="gitlabMR && gitlabMR.state !== 'merged'" class="mt-6 flex flex-col sm:flex-row gap-3">
+      <!-- Approve Button -->
+      <button
+        (click)="approveMergeRequest()"
+        [disabled]="isApproving || !gitlabMR || mrApprovalStatus.approvedByMe"
+        class="flex-1 btn btn-outline btn-primary transition-all duration-200 hover:scale-105 disabled:scale-100">
+        <div class="flex items-center justify-center gap-2">
+          <span *ngIf="!isApproving && !mrApprovalStatus.approvedByMe" class="text-lg">👍</span>
+          <span *ngIf="isApproving" class="text-lg animate-spin">⏳</span>
+          <span *ngIf="!isApproving && mrApprovalStatus.approvedByMe" class="text-lg">✅</span>
+          <span class="font-medium">
+            <span *ngIf="!isApproving && !mrApprovalStatus.approvedByMe">Approve MR</span>
+            <span *ngIf="isApproving">Approving...</span>
+            <span *ngIf="!isApproving && mrApprovalStatus.approvedByMe">Approved</span>
+          </span>
+        </div>
+      </button>
+      
+      <!-- Merge Button -->
+      <button
+        (click)="mergeMergeRequest()"
+        [disabled]="isMerging || !gitlabMR || !mrApprovalStatus.canMerge"
+        class="flex-1 btn btn-success transition-all duration-200 hover:scale-105 disabled:scale-100">
+        <div class="flex items-center justify-center gap-2">
+          <span *ngIf="!isMerging && mrApprovalStatus.canMerge" class="text-lg">🚀</span>
+          <span *ngIf="isMerging" class="text-lg animate-spin">⏳</span>
+          <span *ngIf="!isMerging && !mrApprovalStatus.canMerge" class="text-lg">🔒</span>
+          <span class="font-medium">
+            <span *ngIf="!isMerging && mrApprovalStatus.canMerge">Merge MR</span>
+            <span *ngIf="isMerging">Merging...</span>
+            <span *ngIf="!isMerging && !mrApprovalStatus.canMerge">
+              Need {{ mrApprovalStatus.requiredApprovals }} approvals
+            </span>
+          </span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Approval Status -->
+    <div *ngIf="gitlabMR && gitlabMR.state === 'opened'" class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+          <span class="text-blue-600 dark:text-blue-400 text-sm">📋</span>
+        </div>
+        <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200">Approval Status</h4>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <!-- Your Approval -->
+        <div class="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Your Approval</span>
+          <div class="flex items-center gap-1">
+            <span *ngIf="mrApprovalStatus.approvedByMe" class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span *ngIf="!mrApprovalStatus.approvedByMe" class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+            <span *ngIf="mrApprovalStatus.approvedByMe" class="text-xs text-green-600 dark:text-green-400 font-medium">Approved</span>
+            <span *ngIf="!mrApprovalStatus.approvedByMe" class="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Pending</span>
+          </div>
+        </div>
+        
+        <!-- Total Approvals -->
+        <div class="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Approvals</span>
+          <span class="text-xs font-bold text-blue-600 dark:text-blue-400">
+            {{ mrApprovalStatus.totalApprovals }}/{{ mrApprovalStatus.requiredApprovals }}
+          </span>
+        </div>
+        
+        <!-- Can Merge -->
+        <div class="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Can Merge</span>
+          <div class="flex items-center gap-1">
+            <span *ngIf="mrApprovalStatus.canMerge" class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span *ngIf="!mrApprovalStatus.canMerge" class="w-2 h-2 bg-red-500 rounded-full"></span>
+            <span *ngIf="mrApprovalStatus.canMerge" class="text-xs text-green-600 dark:text-green-400 font-medium">Yes</span>
+            <span *ngIf="!mrApprovalStatus.canMerge" class="text-xs text-red-600 dark:text-red-400 font-medium">No</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Code Review Status -->
+      <div class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+        <div *ngIf="errors.length > 0" class="flex items-center gap-2 text-red-600 dark:text-red-400">
+          <span class="text-sm">⚠️</span>
+          <span class="text-xs font-medium">{{ errors.length }} errors found - please fix before approval</span>
+        </div>
+        <div *ngIf="errors.length === 0" class="flex items-center gap-2 text-green-600 dark:text-green-400">
+          <span class="text-sm">✅</span>
+          <span class="text-xs font-medium">Code review passed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merged Status - Show when MR is already merged -->
+    <div *ngIf="gitlabMR && gitlabMR.state === 'merged'" class="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">✅</span>
+        <div>
+          <h4 class="text-sm font-medium text-green-800 dark:text-green-200">Merge Request Already Merged</h4>
+          <p class="text-xs text-green-700 dark:text-green-300 mt-1">This merge request has been successfully merged and is no longer available for approval.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Diff View -->
+  <div *ngIf="showDiff && diffChanges.length > 0" class="bg-surface border border-border rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-text-light mb-4 flex items-center">
+      📊 Changes Diff ({{ diffChanges.length }} changes)
+    </h3>
+    
+    <!-- File Summary -->
+    <div *ngIf="originalContent && inputContent" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+      <div class="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">📁 Files Changed:</div>
+      <div class="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+        <div>• Original content: {{ originalContent.split('\n').length }} lines</div>
+        <div>• Modified content: {{ inputContent.split('\n').length }} lines</div>
+        <div>• Total changes: {{ diffChanges.length }} modifications</div>
+        <div *ngIf="gitlabMR" class="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+          <div class="font-medium">📊 MR Summary:</div>
+          <div>• Commits: {{ gitlabMR.commits_count }}</div>
+          <div>• File Changes: {{ gitlabMR.changes_count }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="space-y-3 max-h-96 overflow-y-auto">
+      <div *ngFor="let change of diffChanges; let i = index" class="border rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-text-light">Change #{{ i + 1 }} - Line {{ change.line }}</span>
+          <span class="text-xs px-2 py-1 rounded-full"
+                [class]="change.type === 'added' ? 'bg-green-100 text-green-800' : 
+                         change.type === 'removed' ? 'bg-red-100 text-red-800' : 
+                         'bg-yellow-100 text-yellow-800'">
+            {{ change.type }}
+          </span>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div *ngIf="change.oldCode" class="bg-red-50 dark:bg-red-900/20 p-2 rounded">
+            <div class="text-xs text-red-600 dark:text-red-400 mb-1">Removed:</div>
+            <pre class="text-xs text-red-800 dark:text-red-200"><code>{{ change.oldCode }}</code></pre>
+          </div>
+          
+          <div *ngIf="change.newCode" class="bg-green-50 dark:bg-green-900/20 p-2 rounded">
+            <div class="text-xs text-green-600 dark:text-green-400 mb-1">Added:</div>
+            <pre class="text-xs text-green-800 dark:text-green-200"><code>{{ change.newCode }}</code></pre>
+          </div>
+        </div>
+        
+        <div *ngIf="change.context" class="mt-2 p-2 bg-gray-50 dark:bg-gray-900/20 rounded">
+          <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Context:</div>
+          <pre class="text-xs text-gray-800 dark:text-gray-200"><code>{{ change.context }}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="hasResults" class="space-y-4">
+    <!-- Errors -->
+    <div *ngIf="errors.length > 0" class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-red-600 mb-4 flex items-center">
+        ❌ Errors Found ({{ errors.length }})
+      </h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        <div *ngFor="let error of errors" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <p class="text-red-800 dark:text-red-200 font-medium break-words">{{ error.message }}</p>
+              <p *ngIf="error.line" class="text-sm text-red-600 dark:text-red-400 mt-1">
+                Line: {{ error.line }}
+              </p>
+              <div *ngIf="error.code" class="mt-2">
+                <pre class="text-xs bg-red-100 dark:bg-red-900/30 p-2 rounded overflow-x-auto"><code>{{ error.code }}</code></pre>
+              </div>
+            </div>
+            <button
+              *ngIf="error.copyCommand"
+              (click)="copyToClipboard(error.copyCommand)"
+              class="ml-3 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors flex-shrink-0"
+              title="Copy command">
+              📋
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warnings -->
+    <div *ngIf="warnings.length > 0" class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-yellow-600 mb-4 flex items-center">
+        ⚠️ Warnings Found ({{ warnings.length }})
+      </h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        <div *ngFor="let warning of warnings" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <p class="text-yellow-800 dark:text-yellow-200 font-medium break-words">{{ warning.message }}</p>
+              <p *ngIf="warning.line" class="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                Line: {{ warning.line }}
+              </p>
+              <div *ngIf="warning.code" class="mt-2">
+                <pre class="text-xs bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded overflow-x-auto"><code>{{ warning.code }}</code></pre>
+              </div>
+            </div>
+            <button
+              *ngIf="warning.copyCommand"
+              (click)="copyToClipboard(warning.copyCommand)"
+              class="ml-3 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 transition-colors flex-shrink-0"
+              title="Copy command">
+              📋
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions -->
+    <div *ngIf="suggestions.length > 0" class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-blue-600 mb-4 flex items-center">
+        💡 Suggestions ({{ suggestions.length }})
+      </h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        <div *ngFor="let suggestion of suggestions" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <p class="text-blue-800 dark:text-blue-200 font-medium break-words">{{ suggestion.message }}</p>
+              <p *ngIf="suggestion.line" class="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                Line: {{ suggestion.line }}
+              </p>
+              <div *ngIf="suggestion.code" class="mt-2">
+                <pre class="text-xs bg-blue-100 dark:bg-blue-900/30 p-2 rounded overflow-x-auto"><code>{{ suggestion.code }}</code></pre>
+              </div>
+            </div>
+            <button
+              *ngIf="suggestion.copyCommand"
+              (click)="copyToClipboard(suggestion.copyCommand)"
+              class="ml-3 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors flex-shrink-0"
+              title="Copy command">
+              📋
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Review Results -->
+    <div *ngIf="aiReviewResults.length > 0" class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-purple-600 mb-4 flex items-center">
+        🤖 AI Review Results ({{ aiReviewResults.length }})
+      </h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        <div *ngFor="let aiResult of aiReviewResults" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <p class="text-purple-800 dark:text-purple-200 font-medium break-words">{{ aiResult.message }}</p>
+              <p *ngIf="aiResult.line" class="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                Line: {{ aiResult.line }}
+              </p>
+              <div *ngIf="aiResult.code" class="mt-2">
+                <pre class="text-xs bg-purple-100 dark:bg-purple-900/30 p-2 rounded overflow-x-auto"><code>{{ aiResult.code }}</code></pre>
+              </div>
+            </div>
+            <button
+              *ngIf="aiResult.copyCommand"
+              (click)="copyToClipboard(aiResult.copyCommand)"
+              class="ml-3 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors flex-shrink-0"
+              title="Copy command">
+              📋
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+        <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div class="text-2xl font-bold text-red-600">{{ errors.length }}</div>
+          <div class="text-sm text-red-600">Errors</div>
+        </div>
+        <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          <div class="text-2xl font-bold text-yellow-600">{{ warnings.length }}</div>
+          <div class="text-sm text-yellow-600">Warnings</div>
+        </div>
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">{{ suggestions.length }}</div>
+          <div class="text-sm text-blue-600">Suggestions</div>
+        </div>
+        <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <div class="text-2xl font-bold text-purple-600">{{ aiReviewResults.length }}</div>
+          <div class="text-sm text-purple-600">AI Reviews</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

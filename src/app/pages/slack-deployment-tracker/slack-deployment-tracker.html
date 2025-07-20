@@ -1,0 +1,172 @@
+<div class="space-y-6">
+  <!-- Header Section -->
+  <div class="bg-surface border border-border rounded-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-2xl font-bold text-text-light">🚀 Slack Deployment Tracker</h2>
+        <p class="text-text-light/70 mt-1">Track deployment messages from Slack and link them to Jira issues</p>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <button
+          (click)="refreshMessages()"
+          class="btn btn-primary">
+          🔄 Refresh
+        </button>
+        
+        <button
+          (click)="loadSampleMessages()"
+          class="btn btn-outline">
+          🧪 Load Sample Messages
+        </button>
+        
+        <button
+          (click)="updateAllSuccessfulDeployments()"
+          [disabled]="getDeploymentsNeedingUpdates().length === 0 || isUpdatingJira"
+          class="btn btn-success"
+          [class.opacity-50]="getDeploymentsNeedingUpdates().length === 0 || isUpdatingJira">
+          <span *ngIf="!isUpdatingJira">📝 Update Jira Issues</span>
+          <span *ngIf="isUpdatingJira">⏳ Updating...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Information -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+        <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ getSuccessfulDeploymentsCount() }}</div>
+        <div class="text-sm text-green-600 dark:text-green-400">Successful</div>
+      </div>
+      
+      <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+        <div class="text-lg font-bold text-red-600 dark:text-red-400">{{ getFailedDeploymentsCount() }}</div>
+        <div class="text-sm text-red-600 dark:text-red-400">Failed</div>
+      </div>
+      
+      <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ getStartedDeploymentsCount() }}</div>
+        <div class="text-sm text-blue-600 dark:text-blue-400">In Progress</div>
+      </div>
+      
+      <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800">
+        <div class="text-lg font-bold text-purple-600 dark:text-purple-400">{{ getTrackedDeploymentsCount() }}</div>
+        <div class="text-sm text-purple-600 dark:text-purple-400">Tracked</div>
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="flex items-center justify-between text-sm">
+      <div class="flex items-center space-x-4">
+        <span class="text-text-light/70">{{ getConnectionStatus() }}</span>
+        <span class="text-text-light/70">{{ getListeningStatus() }}</span>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <span *ngIf="getDeploymentsNeedingUpdates().length > 0" 
+              class="px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 rounded-full text-xs">
+          ⚠️ {{ getDeploymentsNeedingUpdates().length }} need Jira updates
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration Warnings -->
+  <div *ngIf="!isSlackConfigured() || !isJiraConfigured()" class="space-y-3">
+    <div *ngIf="!isSlackConfigured()" 
+         class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+      <div class="flex items-center space-x-2">
+        <span class="text-yellow-600">⚠️</span>
+        <span class="text-yellow-600">
+          Slack is not configured. Please configure Slack in Settings to start tracking deployments.
+        </span>
+      </div>
+    </div>
+    
+    <div *ngIf="!isJiraConfigured()" 
+         class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+      <div class="flex items-center space-x-2">
+        <span class="text-yellow-600">⚠️</span>
+        <span class="text-yellow-600">
+          Jira is not configured. Please configure Jira in Settings to enable automatic status updates.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deployment Links Summary -->
+  <div *ngIf="deploymentLinks.length > 0" class="bg-surface border border-border rounded-lg p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold text-text-light">📋 Deployment Links</h3>
+      <button
+        (click)="clearAllLinks()"
+        class="btn btn-outline btn-sm text-red-600 hover:text-red-700">
+        🗑️ Clear All
+      </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div *ngFor="let link of deploymentLinks" 
+           class="p-3 bg-surface/50 rounded-lg border border-border">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-medium text-text-light">Job {{ link.jobId }}</div>
+            <div class="text-sm text-text-light/70">→ {{ link.jiraId }}</div>
+          </div>
+          <span class="px-2 py-1 text-xs rounded-full"
+                [class]="link.status === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
+                         link.status === 'FAILED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 
+                         'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'">
+            {{ link.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Section -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-text-light">
+        📨 Deployment Messages ({{ messages.length }})
+      </h3>
+      
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-text-light/70">
+          {{ isListening ? '🟢 Live' : '🔴 Offline' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Messages Grid -->
+    <div *ngIf="messages.length > 0" class="grid gap-4">
+      <app-slack-message-card
+        *ngFor="let message of messages"
+        [message]="message"
+        (trackDeployment)="onTrackDeployment($event)">
+      </app-slack-message-card>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="messages.length === 0" class="text-center py-12">
+      <div class="text-6xl mb-4">📭</div>
+      <h3 class="text-lg font-medium text-text-light mb-2">No deployment messages found</h3>
+      <p class="text-text-light/70 mb-4">
+        {{ !isSlackConfigured() ? 'Configure Slack in Settings to start receiving deployment messages.' : 
+           'Deployment messages will appear here when they are received from Slack.' }}
+      </p>
+      <button
+        (click)="refreshMessages()"
+        class="btn btn-primary">
+        🔄 Refresh Messages
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Track Deployment Dialog -->
+<app-track-deployment-dialog
+  *ngIf="showTrackDialog"
+  [data]="trackDialogData"
+  (closeDialog)="onCloseTrackDialog()"
+  (deploymentTracked)="onDeploymentTracked($event)">
+</app-track-deployment-dialog> 

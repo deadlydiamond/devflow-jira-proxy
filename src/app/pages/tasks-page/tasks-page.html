@@ -1,0 +1,163 @@
+<div>
+  <!-- Create Task Section -->
+  <app-card title="Create New Task" subtitle="Add a new task to your list">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          Task Title *
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="newTaskTitle"
+          placeholder="Enter task title..."
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          Description (optional)
+        </label>
+        <textarea
+          [(ngModel)]="newTaskDescription"
+          placeholder="Enter task description..."
+          rows="3"
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+        ></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          Priority
+        </label>
+        <select
+          [(ngModel)]="newTaskPriority"
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          aria-label="Select task priority"
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="flex justify-end">
+        <app-button 
+          (click)="createTask()"
+          [disabled]="!newTaskTitle.trim()"
+          variant="primary"
+        >
+          Create Task
+        </app-button>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- Filter Section -->
+  <app-card title="Filter Tasks" subtitle="View tasks by status">
+    <div class="flex flex-wrap gap-2">
+      <button
+        *ngFor="let status of ['all', 'todo', 'in-progress', 'done']"
+        (click)="selectStatus(status)"
+        [class]="selectedStatus === status ? 'px-4 py-2 rounded-lg font-medium transition-colors bg-primary text-white hover:bg-primary/90' : 'px-4 py-2 rounded-lg font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-surface dark:text-text-light dark:hover:bg-surface/80'"
+      >
+        {{ status === 'all' ? 'All' : status.replace('-', ' ') | titlecase }}
+        <span class="ml-2 px-2 py-1 text-xs bg-white/20 rounded-full">
+          {{ getStatusCount(status) }}
+        </span>
+      </button>
+    </div>
+  </app-card>
+
+  <!-- Tasks List -->
+  <app-card title="Task List" subtitle="Your tasks and their current status">
+    <div class="space-y-4">
+      <div *ngIf="filteredTasks.length === 0" class="text-center py-8">
+        <div class="text-gray-500 dark:text-text-light/50 mb-2">📋</div>
+        <p class="text-gray-600 dark:text-text-light/70">No tasks found</p>
+        <p class="text-sm text-gray-500 dark:text-text-light/50 mt-1">
+          Create a new task to get started
+        </p>
+      </div>
+      
+      <div *ngIf="filteredTasks.length > 0" class="space-y-4">
+        <div 
+          *ngFor="let task of filteredTasks"
+          class="p-4 border border-gray-200 dark:border-border rounded-lg bg-white dark:bg-card hover:shadow-md transition-shadow"
+        >
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-2">
+                <h3 class="font-medium text-gray-900 dark:text-text-light">
+                  {{ task.title }}
+                </h3>
+                <span
+                  *ngIf="task.isPinned"
+                  class="text-yellow-500"
+                  title="Pinned task"
+                >
+                  📌
+                </span>
+              </div>
+              <p *ngIf="task.description" class="text-sm text-gray-600 dark:text-text-light/70 mb-2">
+                {{ task.description }}
+              </p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                (click)="togglePinTask(task.id)"
+                class="text-gray-400 hover:text-yellow-500 transition-colors p-1"
+                [title]="task.isPinned ? 'Unpin task' : 'Pin task'"
+              >
+                📌
+              </button>
+              <button
+                (click)="deleteTask(task.id)"
+                class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                title="Delete task"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span 
+                class="px-2 py-1 text-xs font-medium rounded-full"
+                [class]="getStatusColor(task.status)"
+              >
+                {{ task.status.replace('-', ' ') }}
+              </span>
+              <span 
+                class="text-xs font-medium"
+                [class]="getPriorityColor(task.priority)"
+              >
+                {{ task.priority }}
+              </span>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <select
+                (change)="updateTaskStatusFromEvent(task.id, $event)"
+                [value]="task.status"
+                class="px-2 py-1 text-xs border border-gray-300 dark:border-border rounded bg-white dark:bg-surface text-gray-900 dark:text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50"
+                aria-label="Update task status"
+              >
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+              <span class="text-xs text-gray-500 dark:text-text-light/50">
+                {{ task.updatedAt | date:'shortDate' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- Jira Integration -->
+  <app-jira-integration></app-jira-integration>
+
+  <!-- AI Task Assistant -->
+  <app-ai-task-assistant></app-ai-task-assistant>
+</div>

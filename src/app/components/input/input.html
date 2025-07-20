@@ -1,0 +1,42 @@
+<div class="space-y-1">
+  <!-- Label -->
+  <label 
+    *ngIf="label" 
+    [for]="'input-' + inputId"
+    class="block text-sm font-medium text-gray-700 dark:text-text-light"
+  >
+    {{ label }}
+    <span *ngIf="required" class="text-red-500">*</span>
+  </label>
+
+  <!-- Input field -->
+  <input
+    [id]="'input-' + inputId"
+    [type]="type"
+    [placeholder]="placeholder"
+    [required]="required"
+    [disabled]="disabled"
+    [readonly]="readonly"
+    [value]="value"
+    [class]="inputClasses"
+    (input)="onInput($event)"
+    (focus)="onFocus($event)"
+    (blur)="onBlur($event)"
+  >
+
+  <!-- Error message -->
+  <p 
+    *ngIf="error && touched" 
+    class="text-sm text-red-600 dark:text-red-400"
+  >
+    {{ error }}
+  </p>
+
+  <!-- Hint text -->
+  <p 
+    *ngIf="hint && !error" 
+    class="text-sm text-gray-500 dark:text-text-light/70"
+  >
+    {{ hint }}
+  </p>
+</div>

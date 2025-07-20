@@ -1,0 +1,81 @@
+<div 
+  class="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+  (click)="onCardClick()"
+>
+  <div class="flex items-start justify-between">
+    <!-- Story content -->
+    <div class="flex-1 min-w-0">
+      <!-- Title and pin button -->
+      <div class="flex items-start justify-between mb-2">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-text-light truncate">
+          {{ story.title }}
+        </h3>
+        
+        <!-- Pin button -->
+        <button 
+          *ngIf="showPinButton"
+          (click)="togglePin(); $event.stopPropagation()"
+          class="ml-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-surface transition-colors"
+          [attr.aria-label]="isPinned ? 'Unpin story' : 'Pin story'"
+          [title]="isPinned ? 'Unpin story' : 'Pin story'"
+        >
+          <svg 
+            class="w-5 h-5 transition-colors duration-200"
+            [class.text-yellow-500]="isPinned"
+            [class.text-gray-400]="!isPinned"
+            [class.dark:text-gray-500]="!isPinned"
+            fill="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Description -->
+      <p *ngIf="story.description" class="text-sm text-gray-600 dark:text-text-light/70 mb-3 line-clamp-2">
+        {{ story.description }}
+      </p>
+
+      <!-- Meta information -->
+      <div class="flex items-center justify-between text-xs text-gray-500 dark:text-text-light/50">
+        <div class="flex items-center space-x-4">
+          <!-- Author -->
+          <span *ngIf="story.author" class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            {{ story.author }}
+          </span>
+
+          <!-- Date -->
+          <span *ngIf="story.date" class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            {{ story.date }}
+          </span>
+        </div>
+
+        <!-- Priority badge -->
+        <span 
+          *ngIf="showPriority && story.priority"
+          class="px-2 py-1 rounded-full text-xs font-medium"
+          [class]="priorityColor"
+        >
+          {{ priorityText }}
+        </span>
+      </div>
+
+      <!-- Tags -->
+      <div *ngIf="showTags && story.tags && story.tags.length > 0" class="flex flex-wrap gap-1 mt-3">
+        <span 
+          *ngFor="let tag of story.tags"
+          class="px-2 py-1 bg-gray-100 dark:bg-surface text-gray-700 dark:text-text-light/70 text-xs rounded-full"
+        >
+          {{ tag }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

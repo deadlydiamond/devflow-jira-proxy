@@ -1,0 +1,54 @@
+/* Track Deployment Dialog Component Styles */
+
+/* Dialog overlay */
+.dialog-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4;
+}
+
+/* Dialog container */
+.dialog-container {
+  @apply bg-surface border border-border rounded-lg max-w-md w-full;
+}
+
+/* Form input styles */
+.form-input {
+  @apply w-full p-3 bg-surface border border-border rounded-lg text-text-light placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary;
+}
+
+.form-input.error {
+  @apply border-red-500;
+}
+
+.form-input:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Button styles */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-border text-text-light hover:bg-surface/50;
+}
+
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Status indicators */
+.status-success {
+  @apply bg-green-500/10 border border-green-500/20 text-green-600;
+}
+
+.status-warning {
+  @apply bg-yellow-500/10 border border-yellow-500/20 text-yellow-600;
+}
+
+.status-info {
+  @apply bg-blue-500/10 border border-blue-500/20 text-blue-600;
+} 

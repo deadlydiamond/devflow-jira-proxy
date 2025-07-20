@@ -1,0 +1,862 @@
+<div class="space-y-6">
+  <!-- Workspace Header -->
+  <div class="bg-surface border border-border rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-text-light mb-4">🎯 Jira Sprint Workspace</h2>
+
+    <!-- Workspace Selection -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Project Selection -->
+      <div>
+        <label class="block text-sm font-medium text-text-light/70 mb-2">Project</label>
+        <div class="relative">
+          <button
+            (click)="loadProjects()"
+            [disabled]="isLoadingProjects"
+            class="w-full text-left p-3 bg-surface border border-border rounded-lg hover:bg-surface/50 disabled:opacity-50">
+            <span *ngIf="!selectedProject">Select Project</span>
+            <span *ngIf="selectedProject">{{ selectedProject.name }}</span>
+            <span *ngIf="isLoadingProjects">Loading...</span>
+          </button>
+
+          <!-- Project Dropdown -->
+          <div *ngIf="showProjectSelector && projects.length > 0"
+               class="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <button
+              *ngFor="let project of projects"
+              (click)="selectProject(project)"
+              class="w-full text-left p-3 hover:bg-surface/50 border-b border-border last:border-b-0">
+              <div class="font-medium text-text-light">{{ project.name }}</div>
+              <div class="text-sm text-text-light/70">{{ project.key }}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Board Selection -->
+      <div>
+        <label class="block text-sm font-medium text-text-light/70 mb-2">Board</label>
+        <div class="relative">
+          <button
+            (click)="selectedProject ? loadBoards(selectedProject.key) : null"
+            [disabled]="!selectedProject || isLoadingBoards"
+            class="w-full text-left p-3 bg-surface border border-border rounded-lg hover:bg-surface/50 disabled:opacity-50">
+            <span *ngIf="!selectedBoard">Select Board</span>
+            <span *ngIf="selectedBoard">{{ selectedBoard.name }}</span>
+            <span *ngIf="isLoadingBoards">Loading...</span>
+          </button>
+
+          <!-- Board Dropdown -->
+          <div *ngIf="showBoardSelector && boards.length > 0"
+               class="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <button
+              *ngFor="let board of boards"
+              (click)="selectBoard(board)"
+              class="w-full text-left p-3 hover:bg-surface/50 border-b border-border last:border-b-0">
+              <div class="font-medium text-text-light">{{ board.name }}</div>
+              <div class="text-sm text-text-light/70">Type: {{ board.type }}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint Selection -->
+      <div>
+        <label class="block text-sm font-medium text-text-light/70 mb-2">Sprint</label>
+        <div class="relative">
+          <button
+            (click)="selectedBoard ? loadSprints(selectedBoard.id) : null"
+            [disabled]="!selectedBoard || isLoadingSprints"
+            class="w-full text-left p-3 bg-surface border border-border rounded-lg hover:bg-surface/50 disabled:opacity-50">
+            <span *ngIf="!selectedSprint">Select Sprint</span>
+            <span *ngIf="selectedSprint">{{ selectedSprint.name }}</span>
+            <span *ngIf="isLoadingSprints">Loading...</span>
+            <span *ngIf="!selectedBoard" class="text-text-light/50">Select Board First</span>
+          </button>
+
+          <!-- Sprint Dropdown -->
+          <div *ngIf="showSprintSelector && sprints.length > 0"
+               class="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <button
+              *ngFor="let sprint of sprints"
+              (click)="selectSprint(sprint)"
+              class="w-full text-left p-3 hover:bg-surface/50 border-b border-border last:border-b-0">
+              <div class="font-medium text-text-light">{{ sprint.name }}</div>
+              <div class="text-sm text-text-light/70">
+                {{ sprint.startDate | date:'shortDate' }} - {{ sprint.endDate | date:'shortDate' }}
+                <span class="ml-2 px-2 py-1 text-xs rounded-full"
+                      [class]="sprint.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                  {{ sprint.state }}
+                </span>
+              </div>
+            </button>
+          </div>
+
+          <!-- No Sprints Available -->
+          <div *ngIf="showSprintSelector && sprints.length === 0 && !isLoadingSprints"
+               class="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg p-3">
+            <div class="text-sm text-text-light/70">No sprints available for this board.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500">
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Story Filters -->
+  <div *ngIf="selectedSprint" class="bg-surface border border-border rounded-lg p-4">
+    <h3 class="text-lg font-semibold text-text-light mb-4">Filters</h3>
+
+    <div class="flex flex-wrap gap-4 items-center">
+      <!-- Type Filter -->
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-text-light/70">Type:</span>
+        <div class="flex bg-surface/50 rounded-lg p-1">
+          <button
+            (click)="storyFilter.type = 'all'; applyFilters()"
+            [class]="storyFilter.type === 'all' ? 'bg-primary text-white' : 'text-text-light/70'"
+            class="px-3 py-1 rounded text-sm">
+            All
+          </button>
+          <button
+            (click)="storyFilter.type = 'story'; applyFilters()"
+            [class]="storyFilter.type === 'story' ? 'bg-primary text-white' : 'text-text-light/70'"
+            class="px-3 py-1 rounded text-sm">
+            Stories
+          </button>
+          <button
+            (click)="storyFilter.type = 'bug'; applyFilters()"
+            [class]="storyFilter.type === 'bug' ? 'bg-primary text-white' : 'text-text-light/70'"
+            class="px-3 py-1 rounded text-sm">
+            Bugs
+          </button>
+          <button
+            (click)="storyFilter.type = 'subtask'; applyFilters()"
+            [class]="storyFilter.type === 'subtask' ? 'bg-primary text-white' : 'text-text-light/70'"
+            class="px-3 py-1 rounded text-sm">
+            Subtasks
+          </button>
+        </div>
+      </div>
+
+      <!-- Assigned to Me Filter -->
+      <div class="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          [(ngModel)]="storyFilter.assignedToMe"
+          (change)="applyFilters()"
+          id="assignedToMe"
+          class="rounded border-border">
+        <label for="assignedToMe" class="text-sm text-text-light/70">Assigned to Me</label>
+      </div>
+
+      <!-- Pinned Only Filter -->
+      <div class="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          [(ngModel)]="storyFilter.pinnedOnly"
+          (change)="applyFilters()"
+          id="pinnedOnly"
+          class="rounded border-border">
+        <label for="pinnedOnly" class="text-sm text-text-light/70">Pinned Only</label>
+      </div>
+
+      <!-- Failed Only Filter -->
+      <div class="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          [(ngModel)]="storyFilter.failedOnly"
+          (change)="applyFilters()"
+          id="failedOnly"
+          class="rounded border-border">
+        <label for="failedOnly" class="text-sm text-text-light/70">Failed Only</label>
+      </div>
+
+      <!-- Story Count -->
+      <div class="ml-auto text-sm text-text-light/70">
+        {{ filteredStories.length }} stories
+      </div>
+    </div>
+
+    <!-- Temporary Debug Info (only show when stories are loaded) -->
+    <div *ngIf="sprintStories.length > 0" class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
+      <div class="font-semibold mb-2 text-yellow-800 dark:text-yellow-200">🔍 Available Issue Types:</div>
+      <div class="text-yellow-700 dark:text-yellow-300">{{ getAvailableIssueTypes().join(', ') }}</div>
+      <div class="mt-2 text-yellow-600 dark:text-yellow-400">
+      <div>Total Stories: {{ sprintStories.length }}</div>
+      <div>Filtered Stories: {{ filteredStories.length }}</div>
+        <div>Failed Stories: {{ getFailedStoriesCount() }}</div>
+    </div>
+    </div>
+
+
+  </div>
+
+  <!-- Sprint Stories -->
+  <div *ngIf="selectedSprint" class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-text-light">
+        Sprint Stories ({{ pagination.total }})
+      </h3>
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-text-light/70">
+          Loaded {{ sprintStories.length }} stories
+        </span>
+        <div *ngIf="pagination.isLoading" class="flex items-center space-x-2">
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+          <span class="text-sm text-text-light/70">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stories Grid -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[calc(100vh-520px)] overflow-y-auto pt-6">
+
+      <!-- Story Cards -->
+      <div
+        *ngFor="let story of filteredStories; trackBy: trackByStoryKey"
+        (click)="openStoryViewer(story)"
+        class="border rounded-lg p-4 cursor-pointer hover:bg-surface/50 transition-colors relative"
+        [class]="getCardBackgroundColor(story.fields.issuetype.name)"
+        [class.animate-pulse]="isFailedTaskAssignedToMe(story)">
+
+        <!-- Failed Task Alert -->
+        <div *ngIf="isFailedTaskAssignedToMe(story)"
+             class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-bounce">
+          ⚠️ Failed
+        </div>
+
+        <!-- Story Header -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs px-2 py-1 rounded-full"
+                  [class]="getIssueTypeColor(story.fields.issuetype.name)">
+              {{ story.fields.issuetype.name }}
+            </span>
+            <span class="text-xs px-2 py-1 rounded-full"
+                  [class]="getPriorityColor(story.fields.priority.name || 'medium')">
+              {{ story.fields.priority.name || 'Medium' }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button
+              (click)="toggleStoryPin(story.key); $event.stopPropagation()"
+              [class.text-gray-400]="!isStoryPinned(story.key)"
+              [class.text-yellow-500]="isStoryPinned(story.key)"
+              class="hover:text-yellow-400 transition-colors">
+              📌
+            </button>
+          </div>
+        </div>
+
+        <!-- Story Content -->
+        <div class="space-y-2">
+          <h4 class="font-medium text-text-light line-clamp-2"
+               [class.text-red-600]="isFailedTaskAssignedToMe(story)">
+            {{ story.fields.summary }}
+          </h4>
+          <p class="text-sm text-text-light/70 line-clamp-3">
+            {{ story.fields.description || 'No description' }}
+          </p>
+        </div>
+
+        <!-- Story Footer -->
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-border">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs px-2 py-1 rounded-full"
+                  [class]="isFailedTaskAssignedToMe(story) ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : getStatusColor(story.fields.status.name)">
+              {{ story.fields.status.name }}
+            </span>
+            <!-- Story Key Badge -->
+            <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded font-mono">
+              {{ story.key }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs text-text-light/70">
+            <span *ngIf="story.fields.assignee">
+              👤 {{ story.fields.assignee.displayName }}
+            </span>
+            <!-- Estimate Badge -->
+            <span *ngIf="story.fields.timeoriginalestimate"
+                  class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+              ⏱️ {{ formatTimeEstimate(story.fields.timeoriginalestimate) }}
+            </span>
+            <span *ngIf="!story.fields.timeoriginalestimate"
+                  class="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded">
+              ⚠️ No estimate
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!pagination.isLoading && sprintStories.length === 0"
+           class="col-span-full text-center py-8">
+        <div class="text-text-light/50 text-sm">
+          No stories found in this sprint
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoadingStories" class="text-center py-8">
+    <div class="text-text-light/70">Loading sprint stories...</div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="selectedSprint && filteredStories.length === 0 && !isLoadingStories" class="text-center py-8">
+    <div class="text-text-light/70">No stories found with current filters.</div>
+  </div>
+</div>
+
+<!-- Story Viewer Modal -->
+<div *ngIf="storyViewer.isOpen"
+     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-surface border border-border rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-border">
+      <h3 class="text-xl font-semibold text-text-light">{{ storyViewer.issue.key }} - {{ storyViewer.issue.fields.summary }}</h3>
+      <button
+        (click)="closeStoryViewer()"
+        class="text-text-light/50 hover:text-text-light">
+        ✕
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="flex flex-col gap-6 p-6 max-h-[90vh] overflow-y-auto">
+
+      <!-- Story Details Section -->
+      <section class="border border-border rounded-lg">
+        <div class="flex items-center justify-between p-4 border-b border-border cursor-pointer"
+             (click)="toggleSection('details')">
+          <h2 class="text-xl font-semibold text-text-light">{{ getIssueTypeDisplayName(storyViewer.issue.fields.issuetype.name) }} Details</h2>
+          <span class="text-text-light/50">{{ isDetailsExpanded ? '−' : '+' }}</span>
+        </div>
+
+        <div *ngIf="isDetailsExpanded" class="p-4">
+          <dl class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div>
+              <dt class="font-medium text-text-light/70">Key</dt>
+              <dd class="text-text-light font-mono">{{ storyViewer.issue.key }}</dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Status</dt>
+              <dd>
+                <span class="badge badge-neutral"
+                      [class]="getStatusColor(storyViewer.issue.fields.status.name)">
+                  {{ storyViewer.issue.fields.status.name }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Assignee</dt>
+              <dd class="text-text-light">{{ storyViewer.issue.fields.assignee?.displayName || 'Unassigned' }}</dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Priority</dt>
+              <dd>
+                <span class="badge badge-warning"
+                                        [class]="getPriorityColor(storyViewer.issue.fields.priority.name || 'medium')">
+                {{ storyViewer.issue.fields.priority.name || 'Medium' }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Type</dt>
+              <dd>
+                <span class="badge badge-info"
+                      [class]="getIssueTypeColor(storyViewer.issue.fields.issuetype.name)">
+                  {{ storyViewer.issue.fields.issuetype.name }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Reporter</dt>
+              <dd class="text-text-light">{{ storyViewer.issue.fields.reporter.displayName || 'Unknown' }}</dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Created</dt>
+              <dd class="text-text-light">{{ storyViewer.issue.fields.created | date:'shortDate' }}</dd>
+            </div>
+            <div>
+              <dt class="font-medium text-text-light/70">Updated</dt>
+              <dd class="text-text-light">{{ storyViewer.issue.fields.updated | date:'shortDate' }}</dd>
+            </div>
+            <div *ngIf="getTimeSpent(storyViewer.issue) !== '0h'">
+              <dt class="font-medium text-text-light/70">Time Spent</dt>
+              <dd class="text-text-light">{{ getTimeSpent(storyViewer.issue) }}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- Description Section -->
+      <section class="border border-border rounded-lg">
+        <div class="flex items-center justify-between p-4 border-b border-border cursor-pointer"
+             (click)="toggleSection('description')">
+          <h2 class="text-xl font-semibold text-text-light">Description</h2>
+          <span class="text-text-light/50">{{ isDescriptionExpanded ? '−' : '+' }}</span>
+        </div>
+
+        <div *ngIf="isDescriptionExpanded" class="p-4">
+          <div class="prose prose-invert max-w-none">
+            <div *ngIf="storyViewer.issue.fields.description"
+                 class="text-sm text-text-light/70 bg-surface/50 p-6 rounded-lg leading-relaxed min-h-[200px]"
+                 [innerHTML]="formatDescription(storyViewer.issue.fields.description)">
+            </div>
+            <div *ngIf="!storyViewer.issue.fields.description"
+                 class="text-sm text-text-light/50 bg-surface/50 p-6 rounded-lg leading-relaxed min-h-[200px] flex items-center justify-center">
+              <span class="text-text-light/30">N/A</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Tools Section -->
+      <section class="border border-border rounded-lg">
+        <div class="flex items-center justify-between p-4 border-b border-border cursor-pointer"
+             (click)="toggleSection('aiTools')">
+          <h2 class="text-xl font-semibold text-text-light">AI Tools</h2>
+          <span class="text-text-light/50">{{ isAiToolsExpanded ? '−' : '+' }}</span>
+        </div>
+
+        <div *ngIf="isAiToolsExpanded" class="p-4 space-y-6">
+          <!-- AI Generation Tools -->
+          <div>
+            <h3 class="font-medium text-text-light mb-3">AI Generation</h3>
+            <div class="flex flex-wrap gap-3">
+              <button
+                (click)="generateSubtasks()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                ⚡ Generate Subtasks
+              </button>
+              <button
+                (click)="estimateStoryTime()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                🧠 Estimate Time
+              </button>
+              <button
+                (click)="improveStoryTitle()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                ✍️ Improve Title
+              </button>
+              <button
+                (click)="generateTestCases()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                🧪 Generate Tests
+              </button>
+              <button
+                (click)="generateTranslations()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                <span *ngIf="!isGeneratingAI">🔍 Find Translatable Code</span>
+                <span *ngIf="isGeneratingAI">⏳ Analyzing...</span>
+              </button>
+              <button
+                (click)="generateCornerCaseQuestions()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                <span *ngIf="!isGeneratingAI">🎯 Senior PO Questions</span>
+                <span *ngIf="isGeneratingAI">⏳ Analyzing...</span>
+              </button>
+              <button
+                (click)="getFeatureTitle()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                <span *ngIf="!isGeneratingAI">🚀 Get Feature Title</span>
+                <span *ngIf="isGeneratingAI">⏳ Converting...</span>
+              </button>
+              <button
+                (click)="getBugTitle()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                <span *ngIf="!isGeneratingAI">🐛 Get Bug Title</span>
+                <span *ngIf="isGeneratingAI">⏳ Converting...</span>
+              </button>
+              <button
+                (click)="getHotfixTitle()"
+                [disabled]="isGeneratingAI"
+                class="btn btn-primary">
+                <span *ngIf="!isGeneratingAI">🔥 Get Hotfix Title</span>
+                <span *ngIf="isGeneratingAI">⏳ Converting...</span>
+              </button>
+              <button
+                (click)="createGitLabBranch()"
+                class="btn btn-info">
+                🌿 Create GitLab Branch
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Results -->
+          <div *ngIf="aiGeneratedSubtasks.length > 0 || aiEstimates || aiImprovedTitle || aiTestCases.length > 0 || aiTranslations || aiCornerCaseQuestions.length > 0 || feBeEstimate.isCalculated"
+               class="space-y-4">
+
+            <!-- Generated Subtasks -->
+            <div *ngIf="aiGeneratedSubtasks.length > 0" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>Generated Subtasks:</span>
+                <button
+                  (click)="copyToClipboard(aiGeneratedSubtasks.join('\n'))"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <ul class="space-y-1">
+                <li *ngFor="let subtask of aiGeneratedSubtasks" class="text-sm text-text-light/70">
+                  • {{ subtask }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Time Estimate -->
+            <div *ngIf="aiEstimates" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>Time Estimate:</span>
+                <button
+                  (click)="copyToClipboard(aiEstimates)"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <p class="text-sm text-text-light/70">{{ aiEstimates }}</p>
+            </div>
+
+            <!-- Improved Title -->
+            <div *ngIf="aiImprovedTitle" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>Improved Title:</span>
+                <button
+                  (click)="copyToClipboard(aiImprovedTitle)"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <p class="text-sm text-text-light/70">{{ aiImprovedTitle }}</p>
+            </div>
+
+            <!-- Test Cases -->
+            <div *ngIf="aiTestCases.length > 0" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>Test Cases:</span>
+                <button
+                  (click)="copyToClipboard(aiTestCases.join('\n'))"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <ul class="space-y-1">
+                <li *ngFor="let testCase of aiTestCases" class="text-sm text-text-light/70">
+                  • {{ testCase }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Translations -->
+            <div *ngIf="aiTranslations" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>Translatable Code Elements (ar.json):</span>
+                <button
+                  (click)="copyToClipboard(aiTranslations)"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <pre class="text-xs text-text-light/70 bg-gray-800 p-3 rounded overflow-x-auto"><code>{{ aiTranslations }}</code></pre>
+            </div>
+
+            <!-- Corner Case Questions -->
+            <div *ngIf="aiCornerCaseQuestions.length > 0" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-2 flex items-center justify-between">
+                <span>🎯 Senior PO Corner Case Questions</span>
+                <button
+                  (click)="copyToClipboard(aiCornerCaseQuestions.join('\n\n'))"
+                  class="text-text-light/50 hover:text-text-light transition-colors">
+                  📋 Copy
+                </button>
+              </h4>
+              <div class="space-y-3">
+                <div *ngFor="let question of aiCornerCaseQuestions"
+                     class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <p class="text-sm text-yellow-600 font-medium">❓ {{ question }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- FE/BE Estimation Results -->
+            <div *ngIf="feBeEstimate.isCalculated" class="bg-surface/50 p-4 rounded-lg">
+              <h4 class="font-medium text-text-light mb-3">FE/BE Estimation Results:</h4>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <!-- Frontend Estimate -->
+                <div class="p-3 border border-border rounded-lg">
+                  <h5 class="font-medium text-text-light mb-2 flex items-center">
+                    🟢 Frontend
+                  </h5>
+                  <div class="text-lg font-bold text-green-600">
+                    {{ feBeEstimate.feTotal }}
+                  </div>
+                </div>
+
+                <!-- Backend Estimate -->
+                <div class="p-3 border border-border rounded-lg">
+                  <h5 class="font-medium text-text-light mb-2 flex items-center">
+                    🔵 Backend
+                  </h5>
+                  <div class="text-lg font-bold text-blue-600">
+                    {{ feBeEstimate.beTotal }}
+                  </div>
+                </div>
+
+                <!-- Total Estimate -->
+                <div class="p-3 border border-primary/20 rounded-lg bg-primary/5">
+                  <h5 class="font-medium text-text-light mb-2">Total</h5>
+                  <div class="text-lg font-bold text-primary">
+                    {{ feBeEstimate.totalEstimate }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Missing Estimates Warning -->
+              <div *ngIf="feBeEstimate.missingEstimates.length > 0"
+                   class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded text-yellow-600 text-sm">
+                ⚠️ **{{ feBeEstimate.missingEstimates.length }} subtasks missing estimates:**
+                <div class="mt-2 space-y-1">
+                  <div *ngFor="let key of feBeEstimate.missingEstimates" class="text-xs">
+                    • {{ key }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Approval Status -->
+              <div *ngIf="feBeEstimate.isApproved" class="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded text-green-600 text-sm">
+                ✅ Approved - Ready to post to Jira
+              </div>
+              <div class="flex flex-wrap gap-3 mt-3">
+                <button
+                  *ngIf="feBeEstimate.isApproved"
+                  (click)="postFeBeEstimateToJira()"
+                  [disabled]="feBeEstimate.isPosting"
+                  class="btn btn-warning">
+                  <span *ngIf="!feBeEstimate.isPosting">📝 Post to Jira</span>
+                  <span *ngIf="feBeEstimate.isPosting">Posting...</span>
+                </button>
+                <button
+                  (click)="createGitLabBranch()"
+                  class="btn btn-info">
+                  🌿 Create GitLab Branch
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subtasks Section -->
+      <section class="border border-border rounded-lg">
+        <div class="flex items-center justify-between p-4 border-b border-border cursor-pointer"
+             (click)="toggleSection('subtasks')">
+          <h2 class="text-xl font-semibold text-text-light">Subtasks</h2>
+          <span class="text-text-light/50">{{ isSubtasksExpanded ? '−' : '+' }}</span>
+        </div>
+
+        <div *ngIf="isSubtasksExpanded" class="p-4">
+          <div *ngIf="isLoadingSubtasks" class="text-center py-4">
+            <div class="text-text-light/70">Loading subtasks...</div>
+          </div>
+
+          <div *ngIf="!isLoadingSubtasks && storyViewer.subtasks.length > 0" class="space-y-6">
+            <!-- FE Subtasks Group -->
+            <div *ngIf="getFeSubtasks().length > 0" class="space-y-3">
+              <h3 class="text-lg font-medium text-text-light flex items-center">
+                🟢 Frontend Subtasks ({{ getFeSubtasks().length }})
+              </h3>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let subtask of getFeSubtasks()"
+                  class="bg-gray-800 rounded-md p-4 flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="font-medium text-text-light">{{ subtask.summary }}</p>
+                    <p class="text-sm text-text-light/70 font-mono">{{ subtask.key }}</p>
+                    <!-- Original Estimate -->
+                    <div class="mt-1 text-xs">
+                      <span *ngIf="hasSubtaskOriginalEstimate(subtask)" class="text-green-400">
+                        📋 Original: {{ getSubtaskOriginalEstimate(subtask) }}
+                      </span>
+                      <span *ngIf="!hasSubtaskOriginalEstimate(subtask)" class="text-yellow-400">
+                        ⚠️ No original estimate
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-success"
+                          [class]="getStatusColor(subtask.status)">
+                      {{ subtask.status }}
+                    </span>
+                    <!-- Missing Original Estimate Warning -->
+                    <span *ngIf="!hasSubtaskOriginalEstimate(subtask)"
+                          class="text-orange-400 cursor-help"
+                          title="No original estimate. Please set the original estimate in Jira.">
+                      📋
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BE Subtasks Group -->
+            <div *ngIf="getBeSubtasks().length > 0" class="space-y-3">
+              <h3 class="text-lg font-medium text-text-light flex items-center">
+                🔵 Backend Subtasks ({{ getBeSubtasks().length }})
+              </h3>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let subtask of getBeSubtasks()"
+                  class="bg-gray-800 rounded-md p-4 flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="font-medium text-text-light">{{ subtask.summary }}</p>
+                    <p class="text-sm text-text-light/70 font-mono">{{ subtask.key }}</p>
+                    <!-- Original Estimate -->
+                    <div class="mt-1 text-xs">
+                      <span *ngIf="hasSubtaskOriginalEstimate(subtask)" class="text-green-400">
+                        📋 Original: {{ getSubtaskOriginalEstimate(subtask) }}
+                      </span>
+                      <span *ngIf="!hasSubtaskOriginalEstimate(subtask)" class="text-yellow-400">
+                        ⚠️ No original estimate
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-success"
+                          [class]="getStatusColor(subtask.status)">
+                      {{ subtask.status }}
+                    </span>
+                    <!-- Missing Original Estimate Warning -->
+                    <span *ngIf="!hasSubtaskOriginalEstimate(subtask)"
+                          class="text-orange-400 cursor-help"
+                          title="No original estimate. Please set the original estimate in Jira.">
+                      📋
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other Subtasks Group -->
+            <div *ngIf="getOtherSubtasks().length > 0" class="space-y-3">
+              <h3 class="text-lg font-medium text-text-light flex items-center">
+                ⚙️ Other Subtasks ({{ getOtherSubtasks().length }})
+              </h3>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let subtask of getOtherSubtasks()"
+                  class="bg-gray-800 rounded-md p-4 flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="font-medium text-text-light">{{ subtask.summary }}</p>
+                    <p class="text-sm text-text-light/70 font-mono">{{ subtask.key }}</p>
+                    <!-- Original Estimate -->
+                    <div class="mt-1 text-xs">
+                      <span *ngIf="hasSubtaskOriginalEstimate(subtask)" class="text-green-400">
+                        📋 Original: {{ getSubtaskOriginalEstimate(subtask) }}
+                      </span>
+                      <span *ngIf="!hasSubtaskOriginalEstimate(subtask)" class="text-yellow-400">
+                        ⚠️ No original estimate
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-success"
+                          [class]="getStatusColor(subtask.status)">
+                      {{ subtask.status }}
+                    </span>
+                    <!-- Missing Original Estimate Warning -->
+                    <span *ngIf="!hasSubtaskOriginalEstimate(subtask)"
+                          class="text-orange-400 cursor-help"
+                          title="No original estimate. Please set the original estimate in Jira.">
+                      📋
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!isLoadingSubtasks && storyViewer.subtasks.length === 0" class="text-center py-4">
+            <div class="text-text-light/70">No subtasks found.</div>
+          </div>
+
+          <!-- Missing Estimates Suggestions -->
+          <div *ngIf="!isLoadingSubtasks && storyViewer.subtasks.length > 0" class="mt-4">
+            <div *ngIf="hasSubtasksWithoutOriginalEstimates()"
+                 class="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
+              <h4 class="font-medium text-orange-600 mb-2">⚠️ Missing Original Estimates</h4>
+              <p class="text-sm text-orange-600/80 mb-3">
+                Some subtasks are missing original estimates. Please set them in Jira for accurate FE/BE calculations.
+              </p>
+              <div class="space-y-1">
+                <div *ngFor="let subtask of getSubtasksWithoutOriginalEstimates()" class="text-xs text-orange-600/70">
+                  • {{ subtask.key }}: {{ subtask.summary }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- AI Results Popup -->
+<div *ngIf="aiResultsPopup.isOpen"
+     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-surface border border-border rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+
+    <!-- Popup Header -->
+    <div class="flex items-center justify-between p-6 border-b border-border">
+      <div>
+        <h3 class="text-xl font-semibold text-text-light">{{ aiResultsPopup.title }}</h3>
+        <p class="text-sm text-text-light/70 mt-1">{{ aiResultsPopup.description }}</p>
+      </div>
+      <button
+        (click)="closeAiResultsPopup()"
+        class="text-text-light/50 hover:text-text-light">
+        ✕
+      </button>
+    </div>
+
+    <!-- Popup Content -->
+    <div class="p-6">
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-text-light">Generated Content:</span>
+          <button
+            (click)="copyToClipboard(aiResultsPopup.content)"
+            class="text-text-light/50 hover:text-text-light transition-colors">
+            📋 Copy
+          </button>
+        </div>
+        <pre class="text-sm text-text-light/70 font-mono whitespace-pre-wrap">{{ aiResultsPopup.content }}</pre>
+      </div>
+    </div>
+
+    <!-- Popup Footer -->
+    <div class="flex items-center justify-end p-6 border-t border-border">
+      <button
+        (click)="closeAiResultsPopup()"
+        class="btn btn-primary">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

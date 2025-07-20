@@ -1,0 +1,40 @@
+/* Slack Message Card Component Styles */
+
+/* Custom button styles for better integration */
+.btn-sm {
+  @apply px-3 py-1 text-xs font-medium rounded-md transition-colors;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-border text-text-light hover:bg-surface/50;
+}
+
+/* Hover effects for better UX */
+.slack-message-card:hover {
+  @apply shadow-md;
+}
+
+/* Status badge animations */
+.status-badge {
+  @apply transition-all duration-200;
+}
+
+/* Link hover effects */
+.deployment-link:hover {
+  @apply underline;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .slack-message-card {
+    @apply p-3;
+  }
+  
+  .message-header {
+    @apply flex-col items-start space-y-2;
+  }
+} 

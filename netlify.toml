@@ -1,0 +1,8 @@
+[build]
+  functions = "netlify/functions"
+  publish = "dist/devflow"
+
+[[redirects]]
+  from = "/api/jira/*"
+  to = "/.netlify/functions/jira-proxy"
+  status = 200 

@@ -1,0 +1,94 @@
+<div class="border border-border rounded-lg p-4 bg-card hover:bg-surface/50 transition-colors">
+  <!-- Message Header -->
+  <div class="flex items-start justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <span class="text-lg">{{ getStatusIcon() }}</span>
+      <div>
+        <h3 class="font-medium text-text-light">{{ getJobName() }}</h3>
+        <p class="text-sm text-text-light/70 font-mono">Job ID: {{ message.jobId || 'Unknown' }}</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <!-- Status Badge -->
+      <span class="px-2 py-1 text-xs font-medium rounded-full" [class]="getStatusColor()">
+        {{ message.status }}
+      </span>
+      
+      <!-- Tracked Badge -->
+      <span *ngIf="isTracked()" 
+            class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+        🏷️ Linked to {{ getLinkedJiraSummary() }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Message Content -->
+  <div class="mb-3">
+    <p class="text-sm text-text-light/70 font-mono bg-surface/50 p-2 rounded">
+      {{ message.text }}
+    </p>
+  </div>
+
+  <!-- Message Footer -->
+  <div class="flex items-center justify-between text-xs text-text-light/50">
+    <div class="flex items-center space-x-4">
+      <span>{{ getFormattedTimestamp() }}</span>
+      <span *ngIf="message.user">👤 {{ message.user }}</span>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <!-- External Link -->
+      <a *ngIf="getDeploymentUrl()" 
+         [href]="getDeploymentUrl()" 
+         target="_blank"
+         class="text-primary hover:text-primary/80 transition-colors">
+        🔗 View Deployment
+      </a>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex items-center justify-between mt-3 pt-3 border-t border-border">
+    <div class="flex items-center space-x-2">
+      <!-- Track/Untrack Button -->
+      <button *ngIf="!isTracked() && message.jobId"
+              (click)="onTrackClick()"
+              [disabled]="!isJiraConfigured()"
+              class="btn btn-primary btn-sm"
+              [class.opacity-50]="!isJiraConfigured()"
+              [title]="!isJiraConfigured() ? 'Configure Jira in Settings first' : 'Link to Jira issue'">
+        <span *ngIf="isJiraConfigured()">🔗 Track Deployment</span>
+        <span *ngIf="!isJiraConfigured()">⚠️ Configure Jira</span>
+      </button>
+      
+      <button *ngIf="isTracked() && message.jobId"
+              (click)="onUntrackClick()"
+              class="btn btn-outline btn-sm text-red-600 hover:text-red-700">
+        🗑️ Unlink
+      </button>
+    </div>
+
+    <!-- Status Indicator -->
+    <div class="flex items-center space-x-1">
+      <span class="text-xs text-text-light/50">
+        {{ message.status === 'SUCCESSFUL' ? 'Deployment completed' : 
+           message.status === 'FAILED' ? 'Deployment failed' : 
+           message.status === 'STARTED' ? 'Deployment in progress' : 'Unknown status' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Linked Jira Info -->
+  <div *ngIf="isTracked()" class="mt-3 p-2 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200 dark:border-purple-800">
+    <div class="flex items-center space-x-2">
+      <span class="text-purple-600 dark:text-purple-400">📋</span>
+      <span class="text-sm text-purple-700 dark:text-purple-300">
+        Linked to Jira issue: <strong>{{ getLinkedJiraSummary() }}</strong>
+      </span>
+    </div>
+    <div *ngIf="message.status === 'SUCCESSFUL'" class="mt-1 text-xs text-purple-600 dark:text-purple-400">
+      ✅ Will automatically update Jira status to "Ready for Test"
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,59 @@
+/* Slack Deployment Tracker Page Styles */
+
+/* Status cards */
+.status-card {
+  @apply p-3 rounded-lg border;
+}
+
+.status-card.success {
+  @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
+}
+
+.status-card.failed {
+  @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800;
+}
+
+.status-card.in-progress {
+  @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800;
+}
+
+.status-card.tracked {
+  @apply bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800;
+}
+
+/* Button styles */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-border text-text-light hover:bg-surface/50;
+}
+
+.btn-sm {
+  @apply px-3 py-1 text-xs;
+}
+
+/* Empty state */
+.empty-state {
+  @apply text-center py-12;
+}
+
+.empty-state-icon {
+  @apply text-6xl mb-4;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .status-grid {
+    @apply grid-cols-2;
+  }
+} 

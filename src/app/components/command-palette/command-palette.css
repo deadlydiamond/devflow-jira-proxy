@@ -1,0 +1,68 @@
+/* Command Palette Styles */
+.command-palette-overlay {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.command-palette-modal {
+  animation: slideIn 0.2s ease-out;
+  max-width: 90vw;
+}
+
+.command-palette-item {
+  transition: all 0.15s ease-in-out;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.command-palette-item:hover {
+  transform: translateX(2px);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Custom scrollbar for command list */
+.command-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.command-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.command-list::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.command-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.dark .command-list::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+.dark .command-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+/* Prevent horizontal scroll */
+.command-list {
+  overflow-x: hidden !important;
+}
+
+.command-palette-item .flex-1 {
+  overflow: hidden;
+}
+
+
