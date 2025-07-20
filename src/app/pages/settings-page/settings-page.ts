@@ -65,7 +65,11 @@ export class SettingsPageComponent implements OnInit {
   // Socket Mode properties
   socketModeStatus: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error' | 'checking' = 'idle';
   socketModeMessage = '';
-  socketModeStats: { recentEventsCount: number; deploymentEventsCount: number } | null = null;
+  socketModeStats: { 
+    recentEventsCount: number; 
+    deploymentEventsCount: number; 
+    lastPollTime?: string;
+  } | null = null;
   
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
