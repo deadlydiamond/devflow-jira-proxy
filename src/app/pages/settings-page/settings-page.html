@@ -454,6 +454,60 @@
           <p *ngIf="socketModeStats.lastPollTime">Last Poll: {{ socketModeStats.lastPollTime | date:'short' }}</p>
         </div>
       </div>
+
+      <!-- Polling Controls -->
+      <div class="border-t border-gray-200 dark:border-border pt-4 mt-4">
+        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Message Polling</h4>
+        
+        <div class="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+          <p class="text-green-800 dark:text-green-200 text-xs">
+            <strong>How it works:</strong> The system polls Slack channels every 10-15 seconds to check for new messages. 
+            Deployment-related messages are automatically detected and tracked separately.
+          </p>
+        </div>
+        
+        <div class="flex items-center space-x-4 mb-3">
+          <app-button 
+            (click)="startPolling()"
+            [disabled]="!socketModeConnected || isPolling"
+            variant="primary"
+            size="sm">
+            Start Polling
+          </app-button>
+          
+          <app-button 
+            (click)="stopPolling()"
+            [disabled]="!isPolling"
+            variant="secondary"
+            size="sm">
+            Stop Polling
+          </app-button>
+          
+          <app-button 
+            (click)="manualPoll()"
+            [disabled]="!socketModeConnected"
+            variant="outline"
+            size="sm">
+            Manual Poll
+          </app-button>
+        </div>
+        
+        <div *ngIf="isPolling" class="text-sm text-blue-600 dark:text-blue-400">
+          🔄 Polling active - checking for new messages every 10 seconds
+        </div>
+        
+        <div *ngIf="lastPollResult" class="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            <strong>Last Poll:</strong> {{ lastPollResult.timestamp | date:'short' }}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            <strong>Total Messages:</strong> {{ lastPollResult.total }}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            <strong>New Messages:</strong> {{ lastPollResult.events.length }}
+          </div>
+        </div>
+      </div>
     </div>
   </app-card>
 

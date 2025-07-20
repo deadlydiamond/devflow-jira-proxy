@@ -10,6 +10,7 @@ import { OpenAiService } from '../../services/openai';
 import { CardComponent } from '../../components/card/card';
 import { ButtonComponent } from '../../components/button/button';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle';
+import { ToastService } from '../../services/toast';
 
 interface Settings {
   gitlabToken: string;
@@ -38,6 +39,7 @@ export class SettingsPageComponent implements OnInit {
   private readonly jiraService = inject(JiraService);
   private readonly slackService = inject(SlackService);
   private readonly openaiService = inject(OpenAiService);
+  private readonly toastService = inject(ToastService);
   
   settings: Settings = {
     gitlabToken: '',
@@ -73,6 +75,10 @@ export class SettingsPageComponent implements OnInit {
   
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
+
+  isPolling = false;
+  lastPollResult: any = null;
+  private pollingSubscription: any = null;
 
   ngOnInit(): void {
     this.loadSettings();
@@ -495,6 +501,67 @@ export class SettingsPageComponent implements OnInit {
         this.socketModeStatus = 'error';
         this.socketModeMessage = 'Failed to check Socket Mode status';
         console.error('Socket mode status check error:', error);
+      }
+    });
+  }
+
+  startPolling(): void {
+    if (!this.socketModeStatus === 'connected') {
+      this.toastService.error('Must be connected to Slack first');
+      return;
+    }
+
+    this.isPolling = true;
+    this.pollingSubscription = this.slackService.startMessagePolling(10000).subscribe({
+      next: (result) => {
+        this.lastPollResult = {
+          ...result,
+          timestamp: new Date()
+        };
+        if (result.events.length > 0) {
+          this.toastService.success(`Found ${result.events.length} new messages`);
+        }
+      },
+      error: (error) => {
+        console.error('Polling error:', error);
+        this.toastService.error('Polling failed: ' + error.message);
+        this.isPolling = false;
+      }
+    });
+
+    this.toastService.success('Started polling for messages');
+  }
+
+  stopPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
+    }
+    this.isPolling = false;
+    this.toastService.success('Stopped polling');
+  }
+
+  manualPoll(): void {
+    if (!this.socketModeStatus === 'connected') {
+      this.toastService.error('Must be connected to Slack first');
+      return;
+    }
+
+    this.slackService.pollSocketModeEvents('general').subscribe({
+      next: (result) => {
+        this.lastPollResult = {
+          ...result,
+          timestamp: new Date()
+        };
+        if (result.events.length > 0) {
+          this.toastService.success(`Found ${result.events.length} new messages`);
+        } else {
+          this.toastService.info('No new messages found');
+        }
+      },
+      error: (error) => {
+        console.error('Manual poll error:', error);
+        this.toastService.error('Manual poll failed: ' + error.message);
       }
     });
   }

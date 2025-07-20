@@ -726,5 +726,57 @@ export class SlackService {
       })
     );
   }
+
+  /**
+   * Start automatic polling for Slack messages
+   */
+  startMessagePolling(intervalMs: number = 10000): Observable<any> {
+    return new Observable(observer => {
+      const pollInterval = setInterval(() => {
+        this.pollSocketModeEvents('general').subscribe({
+          next: (result) => {
+            if (result.ok && result.events.length > 0) {
+              observer.next(result);
+            }
+          },
+          error: (error) => {
+            console.error('Polling error:', error);
+            observer.error(error);
+          }
+        });
+      }, intervalMs);
+
+      // Return cleanup function
+      return () => {
+        clearInterval(pollInterval);
+      };
+    });
+  }
+
+  /**
+   * Start automatic polling for deployment messages
+   */
+  startDeploymentPolling(intervalMs: number = 15000): Observable<any> {
+    return new Observable(observer => {
+      const pollInterval = setInterval(() => {
+        this.pollSocketModeEvents('deployment').subscribe({
+          next: (result) => {
+            if (result.ok && result.events.length > 0) {
+              observer.next(result);
+            }
+          },
+          error: (error) => {
+            console.error('Deployment polling error:', error);
+            observer.error(error);
+          }
+        });
+      }, intervalMs);
+
+      // Return cleanup function
+      return () => {
+        clearInterval(pollInterval);
+      };
+    });
+  }
 } 
  

@@ -29,46 +29,52 @@ module.exports = async (req, res) => {
       const { action, botToken, appToken } = req.body;
       
       if (action === 'connect') {
-        // Initialize polling-based connection
+        const { botToken, appToken } = req.body;
+        
+        if (!botToken || !appToken) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Both botToken and appToken are required' 
+          });
+        }
+        
         try {
-          console.log('🔌 Initializing Slack polling connection...');
-          
-          // Validate tokens
-          if (!botToken || !botToken.startsWith('xoxb-')) {
-            throw new Error('Invalid Slack Bot Token provided');
-          }
-          
-          if (!appToken || !appToken.startsWith('xapp-')) {
-            throw new Error('Invalid Slack App Token provided');
-          }
-          
-          // Initialize Slack client with the provided token
+          // Initialize Slack client with provided tokens
           webClient = new WebClient(botToken);
           
-          // Test the connection by making a simple API call
+          // Test the connection by calling auth.test
           const authTest = await webClient.auth.test();
           
-          if (authTest.ok) {
-            isConnected = true;
-            lastPollTime = new Date().toISOString();
-            
-            console.log('✅ Connected to Slack API for polling');
-            res.status(200).json({ 
-              success: true, 
-              message: 'Connected to Slack API for event polling',
-              botName: authTest.user,
-              teamName: authTest.team
-            });
-          } else {
-            throw new Error('Slack API authentication failed');
+          if (!authTest.ok) {
+            throw new Error(`Authentication failed: ${authTest.error}`);
           }
+          
+          console.log(`✅ Connected to Slack as @${authTest.user}`);
+          isConnected = true;
+          lastPollTime = new Date().toISOString();
+          
+          // Start initial polling
+          try {
+            await pollForNewEvents();
+          } catch (pollError) {
+            console.warn('Initial polling failed:', pollError);
+            // Don't fail the connection if polling fails
+          }
+          
+          res.status(200).json({ 
+            success: true, 
+            message: `Connected to Slack as @${authTest.user}`,
+            user: authTest.user,
+            team: authTest.team
+          });
+          
         } catch (error) {
-          console.error('❌ Failed to connect to Slack API:', error);
+          console.error('❌ Connection failed:', error);
           isConnected = false;
           webClient = null;
           res.status(500).json({ 
             success: false, 
-            error: error.message || 'Failed to connect to Slack API'
+            error: error.message 
           });
         }
         
@@ -194,16 +200,89 @@ module.exports = async (req, res) => {
 // Helper function to poll for new events
 async function pollForNewEvents() {
   try {
-    // This is a placeholder - in a real implementation, you would:
-    // 1. Get the last message timestamp from your storage
-    // 2. Call Slack API to get messages since that timestamp
-    // 3. Process new messages and store them
-    
     console.log('🔄 Polling for new events...');
     lastPollTime = new Date().toISOString();
     
-    // For now, just return success
-    return { success: true, message: 'Polling completed' };
+    if (!webClient) {
+      throw new Error('Slack client not initialized');
+    }
+    
+    // Get list of channels the bot has access to
+    const channelsResponse = await webClient.conversations.list({
+      types: 'public_channel,private_channel',
+      limit: 100
+    });
+    
+    if (!channelsResponse.ok) {
+      throw new Error(`Failed to get channels: ${channelsResponse.error}`);
+    }
+    
+    let newEventsFound = 0;
+    
+    // Poll each channel for recent messages
+    for (const channel of channelsResponse.channels) {
+      try {
+        // Get recent messages from the channel
+        const messagesResponse = await webClient.conversations.history({
+          channel: channel.id,
+          limit: 10, // Get last 10 messages
+          oldest: Math.floor((Date.now() - 5 * 60 * 1000) / 1000) // Last 5 minutes
+        });
+        
+        if (messagesResponse.ok && messagesResponse.messages) {
+          for (const message of messagesResponse.messages) {
+            // Skip bot messages and messages we've already seen
+            if (message.bot_id || message.subtype === 'bot_message') {
+              continue;
+            }
+            
+            // Check if we already have this message
+            const existingEvent = recentEvents.find(e => 
+              e.event.ts === message.ts && e.event.channel === message.channel
+            );
+            
+            if (!existingEvent) {
+              const eventData = {
+                id: Date.now() + Math.random(),
+                timestamp: new Date(parseFloat(message.ts) * 1000).toISOString(),
+                event: {
+                  ...message,
+                  channel_name: channel.name,
+                  channel_id: channel.id
+                },
+                type: 'message',
+                source: 'polling'
+              };
+              
+              // Check if this is a deployment-related event
+              const isDeploymentEvent = checkIfDeploymentEvent(message);
+              
+              if (isDeploymentEvent) {
+                deploymentEvents.unshift(eventData);
+                if (deploymentEvents.length > MAX_DEPLOYMENT_EVENTS) {
+                  deploymentEvents = deploymentEvents.slice(0, MAX_DEPLOYMENT_EVENTS);
+                }
+              } else {
+                recentEvents.unshift(eventData);
+                if (recentEvents.length > MAX_EVENTS) {
+                  recentEvents = recentEvents.slice(0, MAX_EVENTS);
+                }
+              }
+              
+              newEventsFound++;
+              console.log(`📨 Found new message in #${channel.name}: ${message.text?.substring(0, 50)}...`);
+            }
+          }
+        }
+      } catch (channelError) {
+        console.error(`Error polling channel ${channel.name}:`, channelError);
+        // Continue with other channels
+      }
+    }
+    
+    console.log(`✅ Polling completed. Found ${newEventsFound} new events.`);
+    return { success: true, newEventsFound, message: 'Polling completed' };
+    
   } catch (error) {
     console.error('Polling error:', error);
     throw error;
