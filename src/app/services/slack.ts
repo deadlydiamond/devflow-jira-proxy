@@ -97,6 +97,10 @@ export class SlackService {
   private deploymentUpdates = new BehaviorSubject<DeploymentEntry[]>([]);
   public deploymentUpdates$ = this.deploymentUpdates.asObservable();
 
+  // Socket polling state
+  private lastPollTime = new Date().toISOString();
+  private isPolling = false;
+
   // Deployment patterns for parsing messages
   private deploymentPatterns = [
     {
@@ -531,6 +535,105 @@ export class SlackService {
     this.isCooldown = true;
     this.lastRateLimitTime = Date.now();
     this.toastService.warning('Slack API limit reached. Retrying in 1 minute…', 60000);
+  }
+
+  /**
+   * Get Vercel Slack socket endpoint URL
+   */
+  private getSlackSocketUrl(): string {
+    if (window.location.hostname === 'localhost') {
+      // Development: use local socket server
+      return 'http://localhost:3001';
+    } else {
+      // Production: use Vercel backend
+      return 'https://devflow-eg8c50pg1-omer-saleems-projects-36c1c1d3.vercel.app/api/slack-socket';
+    }
+  }
+
+  /**
+   * Poll for new Slack events from Vercel socket endpoint
+   */
+  pollSlackEvents(type: 'deployment' | 'general' = 'deployment'): Observable<any[]> {
+    const url = this.getSlackSocketUrl();
+    
+    return this.http.get<any>(`${url}?type=${type}&since=${this.lastPollTime}`).pipe(
+      map(response => {
+        if (response.ok && response.events) {
+          // Update last poll time
+          if (response.events.length > 0) {
+            this.lastPollTime = new Date().toISOString();
+          }
+          return response.events;
+        }
+        return [];
+      }),
+      catchError(error => {
+        console.error('Failed to poll Slack events:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Start polling for Slack events
+   */
+  startEventPolling(interval: number = 5000): void {
+    if (this.isPolling) {
+      return;
+    }
+
+    this.isPolling = true;
+    
+    // Poll for deployment events
+    timer(0, interval).pipe(
+      switchMap(() => this.pollSlackEvents('deployment'))
+    ).subscribe(events => {
+      if (events.length > 0) {
+        console.log('📨 Received deployment events:', events);
+        // Process events and update deployment tracking
+        this.processSocketEvents(events);
+      }
+    });
+
+    // Poll for general events
+    timer(0, interval * 2).pipe(
+      switchMap(() => this.pollSlackEvents('general'))
+    ).subscribe(events => {
+      if (events.length > 0) {
+        console.log('📨 Received general events:', events);
+        // Process general events if needed
+      }
+    });
+  }
+
+  /**
+   * Stop polling for Slack events
+   */
+  stopEventPolling(): void {
+    this.isPolling = false;
+  }
+
+  /**
+   * Process events received from socket endpoint
+   */
+  private processSocketEvents(events: any[]): void {
+    const deploymentEntries: DeploymentEntry[] = [];
+    
+    events.forEach(eventData => {
+      const slackEvent = eventData.event;
+      
+      if (slackEvent.type === 'message' && slackEvent.text) {
+        const deploymentEntry = this.parseDeploymentFromMessage(slackEvent);
+        if (deploymentEntry) {
+          deploymentEntries.push(deploymentEntry);
+        }
+      }
+    });
+
+    if (deploymentEntries.length > 0) {
+      // Update deployment tracking
+      this.deploymentUpdates.next(deploymentEntries);
+    }
   }
 } 
  

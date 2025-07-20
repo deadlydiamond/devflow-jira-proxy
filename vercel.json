@@ -3,12 +3,19 @@
   "functions": {
     "api/jira-proxy.js": {
       "maxDuration": 30
+    },
+    "api/slack-socket.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/jira/(.*)",
       "destination": "/api/jira-proxy.js"
+    },
+    {
+      "source": "/api/slack-socket",
+      "destination": "/api/slack-socket.js"
     }
   ],
   "headers": [
