@@ -237,7 +237,7 @@ export class JiraService {
       return this.localStorage.get<string>(this.JIRA_URL_KEY, '') || 'https://whitehelmet.atlassian.net';
     } else {
       // Production: use Vercel backend proxy
-      return 'https://devflow-9i9gqn91q-omer-saleems-projects-36c1c1d3.vercel.app/api/jira';
+      return 'https://devflow-odrdb4phz-omer-saleems-projects-36c1c1d3.vercel.app/api/jira';
     }
   }
 
