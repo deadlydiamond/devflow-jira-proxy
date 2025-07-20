@@ -583,5 +583,121 @@ export class SlackService {
       return `${baseUrl}/api/slack-socket`;
     }
   }
+
+  /**
+   * Connect to Slack Socket Mode
+   */
+  connectSocketMode(): Observable<{ success: boolean; message: string; error?: string }> {
+    const socketUrl = this.getSlackSocketUrl();
+    
+    return this.http.post<{ success: boolean; message: string; error?: string }>(socketUrl, {
+      action: 'connect'
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          this.toastService.success('Connected to Slack Socket Mode');
+        } else {
+          this.toastService.error(`Socket Mode connection failed: ${response.error || 'Unknown error'}`);
+        }
+        return response;
+      }),
+      catchError(error => {
+        const errorMessage = error.error?.error || error.message || 'Connection failed';
+        this.toastService.error(`Socket Mode connection failed: ${errorMessage}`);
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /**
+   * Disconnect from Slack Socket Mode
+   */
+  disconnectSocketMode(): Observable<{ success: boolean; message: string }> {
+    const socketUrl = this.getSlackSocketUrl();
+    
+    return this.http.post<{ success: boolean; message: string }>(socketUrl, {
+      action: 'disconnect'
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          this.toastService.success('Disconnected from Slack Socket Mode');
+        }
+        return response;
+      }),
+      catchError(error => {
+        const errorMessage = error.error?.error || error.message || 'Disconnection failed';
+        this.toastService.error(`Socket Mode disconnection failed: ${errorMessage}`);
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /**
+   * Get Socket Mode connection status
+   */
+  getSocketModeStatus(): Observable<{
+    connected: boolean;
+    hasClient: boolean;
+    recentEventsCount: number;
+    deploymentEventsCount: number;
+  }> {
+    const socketUrl = this.getSlackSocketUrl();
+    
+    return this.http.post<{
+      connected: boolean;
+      hasClient: boolean;
+      recentEventsCount: number;
+      deploymentEventsCount: number;
+    }>(socketUrl, {
+      action: 'status'
+    }).pipe(
+      catchError(error => {
+        console.error('Failed to get socket mode status:', error);
+        return of({
+          connected: false,
+          hasClient: false,
+          recentEventsCount: 0,
+          deploymentEventsCount: 0
+        });
+      })
+    );
+  }
+
+  /**
+   * Poll for new events from Socket Mode
+   */
+  pollSocketModeEvents(since?: string, type: 'general' | 'deployment' = 'general'): Observable<{
+    ok: boolean;
+    events: any[];
+    total: number;
+    type: string;
+    socketModeConnected: boolean;
+  }> {
+    const socketUrl = this.getSlackSocketUrl();
+    const params: any = { type };
+    
+    if (since) {
+      params.since = since;
+    }
+    
+    return this.http.get<{
+      ok: boolean;
+      events: any[];
+      total: number;
+      type: string;
+      socketModeConnected: boolean;
+    }>(socketUrl, { params }).pipe(
+      catchError(error => {
+        console.error('Failed to poll socket mode events:', error);
+        return of({
+          ok: false,
+          events: [],
+          total: 0,
+          type,
+          socketModeConnected: false
+        });
+      })
+    );
+  }
 } 
  

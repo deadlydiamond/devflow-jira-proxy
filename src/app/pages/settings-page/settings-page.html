@@ -384,6 +384,68 @@
           </div>
         </div>
       </div>
+
+      <!-- Socket Mode Connection -->
+      <div class="border-t border-gray-200 dark:border-border pt-4 mt-4">
+        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Socket Mode Connection</h4>
+        
+        <div class="flex items-center space-x-4 mb-3">
+          <app-button 
+            (click)="connectSocketMode()"
+            [disabled]="socketModeStatus === 'connecting' || socketModeStatus === 'connected'"
+            variant="primary"
+            size="sm"
+          >
+            <span *ngIf="socketModeStatus === 'connecting'">Connecting...</span>
+            <span *ngIf="socketModeStatus === 'connected'">Connected</span>
+            <span *ngIf="socketModeStatus !== 'connecting' && socketModeStatus !== 'connected'">Connect Socket Mode</span>
+          </app-button>
+          
+          <app-button 
+            (click)="disconnectSocketMode()"
+            [disabled]="socketModeStatus !== 'connected'"
+            variant="secondary"
+            size="sm"
+          >
+            Disconnect
+          </app-button>
+          
+          <app-button 
+            (click)="checkSocketModeStatus()"
+            [disabled]="socketModeStatus === 'checking'"
+            variant="outline"
+            size="sm"
+          >
+            <span *ngIf="socketModeStatus === 'checking'">Checking...</span>
+            <span *ngIf="socketModeStatus !== 'checking'">Check Status</span>
+          </app-button>
+        </div>
+        
+        <div *ngIf="socketModeMessage" class="mb-3">
+          <div 
+            *ngIf="socketModeStatus === 'connected'"
+            class="text-sm text-green-600 dark:text-green-400"
+          >
+            ✅ {{ socketModeMessage }}
+          </div>
+          <div 
+            *ngIf="socketModeStatus === 'error'"
+            class="text-sm text-red-600 dark:text-red-400"
+          >
+            ❌ {{ socketModeMessage }}
+          </div>
+          <div 
+            *ngIf="socketModeStatus === 'connecting' || socketModeStatus === 'checking'"
+            class="text-sm text-blue-600 dark:text-blue-400"
+          >
+            🔄 {{ socketModeMessage }}
+          </div>
+        </div>
+        
+        <div *ngIf="socketModeStats" class="text-xs text-gray-600 dark:text-text-light/70">
+          <p>Recent Events: {{ socketModeStats.recentEventsCount }} | Deployment Events: {{ socketModeStats.deploymentEventsCount }}</p>
+        </div>
+      </div>
     </div>
   </app-card>
 

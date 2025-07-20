@@ -1,4 +1,5 @@
 const { WebClient } = require('@slack/web-api');
+const { SocketModeClient } = require('@slack/socket-mode');
 
 // Slack configuration
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-your-bot-token-here';
@@ -15,33 +16,30 @@ const MAX_EVENTS = 100;
 let deploymentEvents = [];
 const MAX_DEPLOYMENT_EVENTS = 50;
 
-module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+// Socket mode client (will be initialized when needed)
+let socketModeClient = null;
+let isConnected = false;
+
+// Initialize socket mode connection
+async function initializeSocketMode() {
+  if (socketModeClient && isConnected) {
+    return { success: true, message: 'Already connected' };
   }
 
   try {
-    if (req.method === 'POST') {
-      // Handle incoming Slack events
-      const event = req.body;
+    console.log('🔌 Initializing Slack Socket Mode...');
+    
+    // Create socket mode client
+    socketModeClient = new SocketModeClient({
+      appToken: SLACK_APP_TOKEN,
+      logLevel: 'info'
+    });
+
+    // Handle incoming events
+    socketModeClient.on('events_api', async (event) => {
+      console.log('📨 Received Slack event via socket mode:', JSON.stringify(event, null, 2));
       
-      console.log('📨 Received Slack event:', JSON.stringify(event, null, 2));
-      
-      // Extract the actual Slack event
-      let slackEvent = null;
-      if (event.type === 'events_api' && event.body && event.body.event) {
-        slackEvent = event.body.event;
-      } else if (event.body && event.body.event) {
-        slackEvent = event.body.event;
-      } else if (event.type === 'message' || event.channel) {
-        slackEvent = event;
-      }
+      const slackEvent = event.body.event;
       
       if (slackEvent) {
         // Check if this is a deployment-related event
@@ -51,7 +49,8 @@ module.exports = async (req, res) => {
           id: Date.now(),
           timestamp: new Date().toISOString(),
           event: slackEvent,
-          type: slackEvent.type || 'unknown'
+          type: slackEvent.type || 'unknown',
+          source: 'socket_mode'
         };
         
         // Store in appropriate array
@@ -67,11 +66,129 @@ module.exports = async (req, res) => {
           }
         }
         
-        console.log(`✅ Stored ${isDeploymentEvent ? 'deployment' : 'general'} event`);
+        console.log(`✅ Stored ${isDeploymentEvent ? 'deployment' : 'general'} event via socket mode`);
       }
       
       // Acknowledge the event
-      res.status(200).json({ ok: true });
+      await event.ack();
+    });
+
+    // Handle connection events
+    socketModeClient.on('connecting', () => {
+      console.log('🔄 Connecting to Slack Socket Mode...');
+    });
+
+    socketModeClient.on('connected', () => {
+      console.log('✅ Connected to Slack Socket Mode');
+      isConnected = true;
+    });
+
+    socketModeClient.on('disconnected', () => {
+      console.log('❌ Disconnected from Slack Socket Mode');
+      isConnected = false;
+    });
+
+    socketModeClient.on('error', (error) => {
+      console.error('❌ Socket Mode error:', error);
+      isConnected = false;
+    });
+
+    // Start the client
+    await socketModeClient.start();
+    
+    return { success: true, message: 'Socket mode connected successfully' };
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize socket mode:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = async (req, res) => {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  try {
+    if (req.method === 'POST') {
+      const { action } = req.body;
+      
+      if (action === 'connect') {
+        // Initialize socket mode connection
+        const result = await initializeSocketMode();
+        res.status(200).json(result);
+        
+      } else if (action === 'disconnect') {
+        // Disconnect socket mode
+        if (socketModeClient) {
+          await socketModeClient.disconnect();
+          socketModeClient = null;
+          isConnected = false;
+        }
+        res.status(200).json({ success: true, message: 'Disconnected from socket mode' });
+        
+      } else if (action === 'status') {
+        // Get connection status
+        res.status(200).json({
+          connected: isConnected,
+          hasClient: !!socketModeClient,
+          recentEventsCount: recentEvents.length,
+          deploymentEventsCount: deploymentEvents.length
+        });
+        
+      } else {
+        // Handle incoming Slack events (fallback for webhook mode)
+        const event = req.body;
+        
+        console.log('📨 Received Slack event via webhook:', JSON.stringify(event, null, 2));
+        
+        // Extract the actual Slack event
+        let slackEvent = null;
+        if (event.type === 'events_api' && event.body && event.body.event) {
+          slackEvent = event.body.event;
+        } else if (event.body && event.body.event) {
+          slackEvent = event.body.event;
+        } else if (event.type === 'message' || event.channel) {
+          slackEvent = event;
+        }
+        
+        if (slackEvent) {
+          // Check if this is a deployment-related event
+          const isDeploymentEvent = checkIfDeploymentEvent(slackEvent);
+          
+          const eventData = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            event: slackEvent,
+            type: slackEvent.type || 'unknown',
+            source: 'webhook'
+          };
+          
+          // Store in appropriate array
+          if (isDeploymentEvent) {
+            deploymentEvents.unshift(eventData);
+            if (deploymentEvents.length > MAX_DEPLOYMENT_EVENTS) {
+              deploymentEvents = deploymentEvents.slice(0, MAX_DEPLOYMENT_EVENTS);
+            }
+          } else {
+            recentEvents.unshift(eventData);
+            if (recentEvents.length > MAX_EVENTS) {
+              recentEvents = recentEvents.slice(0, MAX_EVENTS);
+            }
+          }
+          
+          console.log(`✅ Stored ${isDeploymentEvent ? 'deployment' : 'general'} event via webhook`);
+        }
+        
+        // Acknowledge the event
+        res.status(200).json({ ok: true });
+      }
       
     } else if (req.method === 'GET') {
       // Return events for Angular to poll
@@ -96,7 +213,8 @@ module.exports = async (req, res) => {
         ok: true,
         events: events,
         total: type === 'deployment' ? deploymentEvents.length : recentEvents.length,
-        type: type || 'general'
+        type: type || 'general',
+        socketModeConnected: isConnected
       });
       
     } else {

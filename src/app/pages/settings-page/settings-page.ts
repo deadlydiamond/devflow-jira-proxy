@@ -61,6 +61,12 @@ export class SettingsPageComponent implements OnInit {
   slackConnectionMessage = '';
   slackChannels: any[] = [];
   isFetchingChannels = false;
+  
+  // Socket Mode properties
+  socketModeStatus: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error' | 'checking' = 'idle';
+  socketModeMessage = '';
+  socketModeStats: { recentEventsCount: number; deploymentEventsCount: number } | null = null;
+  
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
 
