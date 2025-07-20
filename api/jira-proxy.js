@@ -71,11 +71,17 @@ module.exports = async (req, res) => {
   const isTransitionsEndpoint = jiraPath.includes('/transitions');
   const isPostRequest = method === 'POST';
   
-  // For POST requests to transitions, ensure we have proper XSRF headers
-  if (isTransitionsEndpoint && isPostRequest) {
+  // For transitions endpoint, ensure we have proper XSRF headers
+  if (isTransitionsEndpoint) {
     options.headers['X-Atlassian-Token'] = 'no-check';
     options.headers['X-AUSERNAME'] = headers['x-ausername'] || 'admin';
     options.headers['X-Requested-With'] = 'XMLHttpRequest';
+    
+    // For POST requests to transitions, add additional headers
+    if (isPostRequest) {
+      options.headers['Content-Type'] = 'application/json';
+      options.headers['Accept'] = 'application/json';
+    }
   }
 
   return new Promise((resolve, reject) => {
