@@ -67,6 +67,17 @@ module.exports = async (req, res) => {
     options.headers['Referer'] = headers.referer;
   }
 
+  // Special handling for transitions endpoint
+  const isTransitionsEndpoint = jiraPath.includes('/transitions');
+  const isPostRequest = method === 'POST';
+  
+  // For POST requests to transitions, ensure we have proper XSRF headers
+  if (isTransitionsEndpoint && isPostRequest) {
+    options.headers['X-Atlassian-Token'] = 'no-check';
+    options.headers['X-AUSERNAME'] = headers['x-ausername'] || 'admin';
+    options.headers['X-Requested-With'] = 'XMLHttpRequest';
+  }
+
   return new Promise((resolve, reject) => {
     const jiraReq = https.request(options, (jiraRes) => {
       let data = '';
@@ -95,7 +106,7 @@ module.exports = async (req, res) => {
       resolve();
     });
 
-    // Send request body if present
+    // Send request body if present and method is not GET
     if (body && method !== 'GET') {
       const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
       jiraReq.write(bodyString);

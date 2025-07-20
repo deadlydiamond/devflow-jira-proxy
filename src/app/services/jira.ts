@@ -471,8 +471,8 @@ export class JiraService {
    * Get available transitions for an issue
    */
   getIssueTransitions(issueKey: string): Observable<{ transitions: JiraTransition[] }> {
-    // Use direct Jira URL since proxy server is not working correctly
-    const url = `${this.getJiraUrl()}/rest/api/3/issue/${issueKey}/transitions`;
+    // Use proxy to avoid CORS issues
+    const url = `/api/jira/rest/api/3/issue/${issueKey}/transitions`;
     
     return this.http.get<{ transitions: JiraTransition[] }>(url, { 
       headers: this.getHeaders()
@@ -483,8 +483,8 @@ export class JiraService {
    * Transition issue status
    */
   transitionIssue(issueKey: string, transitionId: string): Observable<any> {
-    // Use direct Jira URL since proxy server is not working correctly
-    const url = `${this.getJiraUrl()}/rest/api/3/issue/${issueKey}/transitions`;
+    // Use proxy to avoid CORS issues
+    const url = `/api/jira/rest/api/3/issue/${issueKey}/transitions`;
     const body = {
       transition: {
         id: transitionId
