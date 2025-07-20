@@ -85,6 +85,7 @@ export class SlackService {
   private readonly SLACK_API_BASE = 'https://slack.com/api';
   private readonly TOKEN_KEY = 'slackToken';
   private readonly CHANNEL_ID_KEY = 'slackChannelId';
+  private readonly SOCKET_TOKEN_KEY = 'slackSocketToken';
   
   // Rate limiting state
   private isCooldown = false;
@@ -138,6 +139,20 @@ export class SlackService {
    */
   setChannelId(channelId: string): void {
     this.localStorage.set(this.CHANNEL_ID_KEY, channelId);
+  }
+
+  /**
+   * Get Slack socket token from localStorage
+   */
+  getSocketToken(): string | null {
+    return this.localStorage.get<string>(this.SOCKET_TOKEN_KEY, '');
+  }
+
+  /**
+   * Set Slack socket token
+   */
+  setSocketToken(token: string): void {
+    this.localStorage.set(this.SOCKET_TOKEN_KEY, token);
   }
 
   /**
@@ -522,6 +537,7 @@ export class SlackService {
   clearSettings(): void {
     this.localStorage.remove(this.TOKEN_KEY);
     this.localStorage.remove(this.CHANNEL_ID_KEY);
+    this.localStorage.remove(this.SOCKET_TOKEN_KEY);
   }
 
   /**
