@@ -63,14 +63,39 @@ export class SlackMessageService {
     this._isListening.next(true);
     console.log('🔌 Starting Slack polling listener...');
 
-    // Start polling for messages every 30 seconds
-    timer(0, this.pollingInterval).pipe(
-      switchMap(() => this.refreshMessages()),
+    // Use the socket mode polling from slack service instead of timer
+    this.slackService.startDeploymentPolling(this.pollingInterval).pipe(
       catchError(error => {
-        console.error('Polling error:', error);
+        console.error('Deployment polling error:', error);
         return of(null);
       })
-    ).subscribe();
+    ).subscribe({
+      next: (result) => {
+        if (result && result.ok && result.events && result.events.length > 0) {
+          console.log(`📨 Found ${result.events.length} deployment events`);
+          
+          // Process the events
+          const deploymentMessages: SlackDeploymentMessage[] = [];
+          
+          for (const event of result.events) {
+            if (event.event && this.isDeploymentMessage(event.event)) {
+              const parsedMessage = this.parseDeploymentMessage(event.event);
+              if (parsedMessage) {
+                deploymentMessages.push(parsedMessage);
+              }
+            }
+          }
+          
+          if (deploymentMessages.length > 0) {
+            console.log(`🚀 Found ${deploymentMessages.length} deployment messages`);
+            this.processNewMessages(deploymentMessages);
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Deployment polling error:', error);
+      }
+    });
   }
 
   /**
@@ -614,9 +639,42 @@ export class SlackMessageService {
    */
   async refreshMessages(): Promise<void> {
     try {
-      // With Socket Mode, we don't need to manually refresh
-      // Events come in real-time
-      this.toastService.success('Socket Mode is active - events come in real-time');
+      console.log('🔄 Manually refreshing deployment messages...');
+      
+      // Use socket mode polling to get latest deployment events
+      this.slackService.pollSocketModeEvents(undefined, 'deployment').subscribe({
+        next: (result) => {
+          if (result.ok && result.events && result.events.length > 0) {
+            console.log(`📨 Found ${result.events.length} deployment events`);
+            
+            // Process the events
+            const deploymentMessages: SlackDeploymentMessage[] = [];
+            
+            for (const event of result.events) {
+              if (event.event && this.isDeploymentMessage(event.event)) {
+                const parsedMessage = this.parseDeploymentMessage(event.event);
+                if (parsedMessage) {
+                  deploymentMessages.push(parsedMessage);
+                }
+              }
+            }
+            
+            if (deploymentMessages.length > 0) {
+              console.log(`🚀 Found ${deploymentMessages.length} deployment messages`);
+              this.processNewMessages(deploymentMessages);
+              this.toastService.success(`Found ${deploymentMessages.length} new deployment messages`);
+            } else {
+              this.toastService.info('No new deployment messages found');
+            }
+          } else {
+            this.toastService.info('No new deployment events found');
+          }
+        },
+        error: (error) => {
+          console.error('Error refreshing messages:', error);
+          this.toastService.error('Failed to refresh messages');
+        }
+      });
     } catch (error) {
       console.error('Error refreshing messages:', error);
       this.toastService.error('Failed to refresh messages');
