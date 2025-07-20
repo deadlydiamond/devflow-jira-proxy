@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Jira-URL');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Jira-URL, X-Requested-With');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -38,16 +38,33 @@ module.exports = async (req, res) => {
     headers: {
       'Content-Type': headers['content-type'] || 'application/json',
       'Authorization': headers.authorization,
-      'User-Agent': headers['user-agent'] || 'DevFlow-App/1.0'
+      'User-Agent': headers['user-agent'] || 'DevFlow-App/1.0',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
     }
   };
 
-  // Add XSRF headers if present
+  // Add XSRF headers - these are crucial for Jira
   if (headers['x-atlassian-token']) {
     options.headers['X-Atlassian-Token'] = headers['x-atlassian-token'];
+  } else {
+    // Use the standard no-check token for Jira
+    options.headers['X-Atlassian-Token'] = 'no-check';
   }
+  
   if (headers['x-ausername']) {
     options.headers['X-AUSERNAME'] = headers['x-ausername'];
+  }
+
+  // Add Origin and Referer headers for XSRF protection
+  if (headers.origin) {
+    options.headers['Origin'] = headers.origin;
+  }
+  if (headers.referer) {
+    options.headers['Referer'] = headers.referer;
   }
 
   return new Promise((resolve, reject) => {
@@ -80,7 +97,8 @@ module.exports = async (req, res) => {
 
     // Send request body if present
     if (body && method !== 'GET') {
-      jiraReq.write(JSON.stringify(body));
+      const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
+      jiraReq.write(bodyString);
     }
     
     jiraReq.end();

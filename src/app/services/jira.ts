@@ -385,32 +385,25 @@ export class JiraService {
    * Get headers with XSRF token for POST requests
    */
   private getHeadersWithXSRF(): Observable<HttpHeaders> {
-    return this.getXSRFToken().pipe(
-      map(xsrfToken => {
-        const email = this.getEmail();
-        const token = this.getToken();
-        
-        if (!email || !token) {
-          return new HttpHeaders({
-            'Content-Type': 'application/json'
-          });
-        }
+    const email = this.getEmail();
+    const token = this.getToken();
+    
+    if (!email || !token) {
+      return of(new HttpHeaders({
+        'Content-Type': 'application/json'
+      }));
+    }
 
-        const auth = btoa(`${email}:${token}`);
-        const headers: any = {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
-        };
+    const auth = btoa(`${email}:${token}`);
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${auth}`,
+      'X-Atlassian-Token': 'no-check',
+      'X-AUSERNAME': email,
+      'X-Requested-With': 'XMLHttpRequest'
+    };
 
-        // Add XSRF token if available
-        if (xsrfToken) {
-          headers['X-Atlassian-Token'] = 'no-check';
-          headers['X-AUSERNAME'] = email;
-        }
-
-        return new HttpHeaders(headers);
-      })
-    );
+    return of(new HttpHeaders(headers));
   }
 
   /**

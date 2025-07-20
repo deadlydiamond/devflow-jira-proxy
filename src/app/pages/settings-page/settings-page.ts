@@ -76,7 +76,10 @@ export class SettingsPageComponent implements OnInit {
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
 
-  socketModeConnected = false;
+  get socketModeConnected(): boolean {
+    return this.socketModeStatus === 'connected';
+  }
+
   isPolling = false;
   lastPollResult: any = null;
   private pollingSubscription: any = null;
