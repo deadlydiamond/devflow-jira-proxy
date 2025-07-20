@@ -97,9 +97,10 @@ export class SettingsPageComponent implements OnInit {
       this.settings.jiraToken = jiraToken;
     }
     
-    const jiraUrl = this.jiraService.getJiraUrl();
-    if (jiraUrl) {
-      this.settings.jiraUrl = jiraUrl;
+    // Use the actual Jira base URL for display, not the proxy URL
+    const jiraBaseUrl = this.jiraService.getJiraBaseUrl();
+    if (jiraBaseUrl) {
+      this.settings.jiraUrl = jiraBaseUrl;
     }
     
     const jiraEmail = this.jiraService.getEmail();
@@ -256,6 +257,8 @@ export class SettingsPageComponent implements OnInit {
     this.jiraService.setJiraUrl(this.settings.jiraUrl);
     this.jiraService.setEmail(this.settings.jiraEmail);
 
+    // In production, the Jira service will automatically use the Vercel proxy
+    // In development, it will use the direct Jira URL
     this.jiraService.testConnection().subscribe({
       next: (response) => {
         this.jiraConnectionStatus = 'success';

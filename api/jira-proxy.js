@@ -15,11 +15,24 @@ module.exports = async (req, res) => {
   
   // Extract the Jira API path from the request
   const jiraPath = url.replace('/api/jira', '');
-  const jiraUrl = `https://whitehelmet.atlassian.net${jiraPath}`;
+  
+  // Get the Jira base URL from the Authorization header or use default
+  let jiraBaseUrl = 'https://whitehelmet.atlassian.net';
+  
+  // Try to extract Jira URL from Authorization header if it contains domain info
+  if (headers.authorization && headers.authorization.includes('Basic')) {
+    // For now, use the default URL, but this could be enhanced to extract from auth
+    jiraBaseUrl = 'https://whitehelmet.atlassian.net';
+  }
+  
+  const jiraUrl = `${jiraBaseUrl}${jiraPath}`;
+  
+  // Parse the hostname from the Jira URL
+  const urlObj = new URL(jiraBaseUrl);
   
   // Forward the request to Jira
   const options = {
-    hostname: 'whitehelmet.atlassian.net',
+    hostname: urlObj.hostname,
     port: 443,
     path: jiraPath,
     method: method,
