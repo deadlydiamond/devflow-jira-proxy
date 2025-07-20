@@ -237,7 +237,7 @@ export class JiraService {
       return this.localStorage.get<string>(this.JIRA_URL_KEY, '') || 'https://whitehelmet.atlassian.net';
     } else {
       // Production: use Vercel backend proxy
-      return 'https://devflow-eg8c50pg1-omer-saleems-projects-36c1c1d3.vercel.app/api/jira';
+      return 'https://devflow-6193j6yd8-omer-saleems-projects-36c1c1d3.vercel.app/api/jira';
     }
   }
 
@@ -331,16 +331,22 @@ export class JiraService {
     const token = this.getToken();
     
     if (!email || !token) {
-      return new HttpHeaders({
-        'Content-Type': 'application/json'
-      });
+      throw new Error('Jira credentials not configured');
     }
 
-    const auth = btoa(`${email}:${token}`);
+    const authString = `${email}:${token}`;
+    const base64Auth = btoa(authString);
+    
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${auth}`
+      'Authorization': `Basic ${base64Auth}`,
+      'Content-Type': 'application/json'
     });
+
+    // Add Jira URL header for proxy
+    if (window.location.hostname !== 'localhost') {
+      const jiraBaseUrl = this.getJiraBaseUrl();
+      headers.set('X-Jira-URL', jiraBaseUrl);
+    }
 
     return headers;
   }

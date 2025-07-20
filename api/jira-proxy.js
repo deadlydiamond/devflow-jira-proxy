@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Jira-URL');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -16,13 +16,12 @@ module.exports = async (req, res) => {
   // Extract the Jira API path from the request
   const jiraPath = url.replace('/api/jira', '');
   
-  // Get the Jira base URL from the Authorization header or use default
-  let jiraBaseUrl = 'https://whitehelmet.atlassian.net';
+  // Get the Jira base URL from headers or use default
+  let jiraBaseUrl = headers['x-jira-url'] || 'https://whitehelmet.atlassian.net';
   
-  // Try to extract Jira URL from Authorization header if it contains domain info
-  if (headers.authorization && headers.authorization.includes('Basic')) {
-    // For now, use the default URL, but this could be enhanced to extract from auth
-    jiraBaseUrl = 'https://whitehelmet.atlassian.net';
+  // Ensure the URL has a protocol
+  if (!jiraBaseUrl.startsWith('http')) {
+    jiraBaseUrl = `https://${jiraBaseUrl}`;
   }
   
   const jiraUrl = `${jiraBaseUrl}${jiraPath}`;
