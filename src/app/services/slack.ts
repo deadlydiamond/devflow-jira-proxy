@@ -546,7 +546,7 @@ export class SlackService {
       return 'http://localhost:3001';
     } else {
       // Production: use Vercel backend
-      return 'https://devflow-eg8c50pg1-omer-saleems-projects-36c1c1d3.vercel.app/api/slack-socket';
+      return 'https://devflow-6193j6yd8-omer-saleems-projects-36c1c1d3.vercel.app/api/slack-socket';
     }
   }
 
