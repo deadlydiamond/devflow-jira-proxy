@@ -6,6 +6,9 @@
     },
     "api/slack-socket.js": {
       "maxDuration": 30
+    },
+    "api/slack-proxy.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -16,6 +19,10 @@
     {
       "source": "/api/slack-socket",
       "destination": "/api/slack-socket.js"
+    },
+    {
+      "source": "/api/slack/(.*)",
+      "destination": "/api/slack-proxy.js"
     }
   ],
   "headers": [
@@ -32,7 +39,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME"
+          "value": "Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Slack-Token"
         }
       ]
     }

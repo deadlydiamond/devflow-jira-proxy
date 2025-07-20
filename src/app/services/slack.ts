@@ -218,9 +218,14 @@ export class SlackService {
       return throwError(() => new Error('Slack token not configured'));
     }
 
-    return this.http.get<SlackApiResponse<any>>(`${this.SLACK_API_BASE}/auth.test`, {
+    // Use Vercel proxy to avoid CORS issues
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : window.location.origin;
+    
+    return this.http.get<SlackApiResponse<any>>(`${baseUrl}/api/slack/auth.test`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'X-Slack-Token': token
       }
     }).pipe(
       map(response => {
@@ -253,9 +258,14 @@ export class SlackService {
       return throwError(() => new Error('Slack token not configured'));
     }
 
-    return this.http.get<SlackApiResponse<{ channels: SlackChannel[] }>>(`${this.SLACK_API_BASE}/conversations.list`, {
+    // Use Vercel proxy to avoid CORS issues
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : window.location.origin;
+
+    return this.http.get<SlackApiResponse<{ channels: SlackChannel[] }>>(`${baseUrl}/api/slack/conversations.list`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'X-Slack-Token': token
       },
       params: {
         types: 'public_channel,private_channel'
@@ -308,9 +318,14 @@ export class SlackService {
       return throwError(() => new Error('Rate limit cooldown active'));
     }
 
-    return this.http.get<SlackApiResponse<{ messages: SlackMessage[] }>>(`${this.SLACK_API_BASE}/conversations.history`, {
+    // Use Vercel proxy to avoid CORS issues
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : window.location.origin;
+
+    return this.http.get<SlackApiResponse<{ messages: SlackMessage[] }>>(`${baseUrl}/api/slack/conversations.history`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'X-Slack-Token': token
       },
       params: {
         channel: channelId,
@@ -357,9 +372,14 @@ export class SlackService {
       return throwError(() => new Error('Slack token not configured'));
     }
 
-    return this.http.get<SlackApiResponse<{ members: SlackUser[] }>>(`${this.SLACK_API_BASE}/users.list`, {
+    // Use Vercel proxy to avoid CORS issues
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : window.location.origin;
+
+    return this.http.get<SlackApiResponse<{ members: SlackUser[] }>>(`${baseUrl}/api/slack/users.list`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'X-Slack-Token': token
       }
     }).pipe(
       map(response => {
