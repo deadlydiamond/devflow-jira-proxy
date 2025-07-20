@@ -341,7 +341,10 @@ export class JiraService {
     
     const headers = new HttpHeaders({
       'Authorization': `Basic ${base64Auth}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Atlassian-Token': 'no-check',
+      'X-AUSERNAME': email,
+      'X-Requested-With': 'XMLHttpRequest'
     });
 
     // Add Jira URL header for proxy
