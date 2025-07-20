@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject, timer, of } from 'rxjs';
-import { catchError, map, switchMap, retryWhen, take } from 'rxjs/operators';
+import { catchError, map, switchMap, retryWhen, take, tap } from 'rxjs/operators';
 import { LocalStorageService } from './local-storage';
 import { ToastService } from './toast';
 
@@ -598,18 +598,23 @@ export class SlackService {
       botToken: botToken,
       appToken: appToken
     }).pipe(
-      map(response => {
+      tap(response => {
         if (response.success) {
-          this.toastService.success('Connected to Slack API for event polling');
+          console.log('✅ Slack tokens validated successfully');
         } else {
-          this.toastService.error(`Connection failed: ${response.error || 'Unknown error'}`);
+          console.error('❌ Slack token validation failed:', response.error);
+          this.toastService.error(`Token validation failed: ${response.error || 'Unknown error'}`);
         }
-        return response;
       }),
       catchError(error => {
-        const errorMessage = error.error?.error || error.message || 'Connection failed';
-        this.toastService.error(`Connection failed: ${errorMessage}`);
-        return throwError(() => new Error(errorMessage));
+        console.error('❌ Slack token validation error:', error);
+        const errorMessage = error.error?.error || error.message || 'Token validation failed';
+        this.toastService.error(`Token validation failed: ${errorMessage}`);
+        return of({ 
+          success: false, 
+          message: 'Token validation failed', 
+          error: error.message || 'Unknown error' 
+        });
       })
     );
   }
@@ -623,16 +628,22 @@ export class SlackService {
     return this.http.post<{ success: boolean; message: string }>(socketUrl, {
       action: 'disconnect'
     }).pipe(
-      map(response => {
+      tap(response => {
         if (response.success) {
-          this.toastService.success('Disconnected from Slack API');
+          console.log('✅ Slack polling stopped successfully');
+        } else {
+          console.error('❌ Slack polling stop failed');
+          this.toastService.error(`Stop polling failed: ${response.message || 'Unknown error'}`);
         }
-        return response;
       }),
       catchError(error => {
-        const errorMessage = error.error?.error || error.message || 'Disconnection failed';
-        this.toastService.error(`Disconnection failed: ${errorMessage}`);
-        return throwError(() => new Error(errorMessage));
+        console.error('❌ Slack polling stop error:', error);
+        const errorMessage = error.error?.error || error.message || 'Stop polling failed';
+        this.toastService.error(`Stop polling failed: ${errorMessage}`);
+        return of({ 
+          success: false, 
+          message: 'Stop polling failed' 
+        });
       })
     );
   }

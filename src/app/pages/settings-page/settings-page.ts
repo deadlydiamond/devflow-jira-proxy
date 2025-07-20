@@ -64,14 +64,16 @@ export class SettingsPageComponent implements OnInit {
   slackChannels: any[] = [];
   isFetchingChannels = false;
   
-  // Socket Mode properties
+  // Slack Socket Mode (now Polling Mode)
   socketModeStatus: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error' | 'checking' = 'idle';
-  socketModeMessage = '';
-  socketModeStats: { 
-    recentEventsCount: number; 
-    deploymentEventsCount: number; 
-    lastPollTime?: string;
-  } | null = null;
+  socketModeMessage: string = '';
+  socketModeToken: string = '';
+  botToken: string = '';
+
+  // Polling status
+  isPolling: boolean = false;
+  lastPollResult: any = null;
+  pollingSubscription: any = null;
   
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
@@ -79,10 +81,6 @@ export class SettingsPageComponent implements OnInit {
   get socketModeConnected(): boolean {
     return this.socketModeStatus === 'connected';
   }
-
-  isPolling = false;
-  lastPollResult: any = null;
-  private pollingSubscription: any = null;
 
   ngOnInit(): void {
     this.loadSettings();
@@ -434,47 +432,53 @@ export class SettingsPageComponent implements OnInit {
 
   // Socket Mode Methods
   connectSocketMode(): void {
+    if (!this.socketModeToken || !this.botToken) {
+      this.socketModeMessage = 'Please enter both Bot Token and Socket Mode Token';
+      return;
+    }
+
     this.socketModeStatus = 'connecting';
-    this.socketModeMessage = 'Connecting to Slack Socket Mode...';
+    this.slackService.setBotToken(this.botToken);
+    this.slackService.setSocketToken(this.socketModeToken);
     
     this.slackService.connectSocketMode().subscribe({
       next: (response) => {
         if (response.success) {
           this.socketModeStatus = 'connected';
-          this.socketModeMessage = response.message;
+          this.socketModeMessage = 'Slack tokens validated successfully';
           this.checkSocketModeStatus(); // Get stats
         } else {
           this.socketModeStatus = 'error';
-          this.socketModeMessage = response.error || 'Connection failed';
+          this.socketModeMessage = response.error || 'Token validation failed';
         }
       },
       error: (error) => {
         this.socketModeStatus = 'error';
-        this.socketModeMessage = error.message || 'Connection failed';
-        console.error('Socket mode connection error:', error);
+        this.socketModeMessage = error.message || 'Token validation failed';
       }
     });
   }
 
   disconnectSocketMode(): void {
     this.socketModeStatus = 'disconnected';
-    this.socketModeMessage = 'Disconnecting from Slack Socket Mode...';
+    this.socketModeMessage = 'Stopping Slack polling...';
     
     this.slackService.disconnectSocketMode().subscribe({
       next: (response) => {
         if (response.success) {
           this.socketModeStatus = 'idle';
           this.socketModeMessage = response.message;
-          this.socketModeStats = null;
+          this.socketModeToken = ''; // Clear token on disconnect
+          this.botToken = ''; // Clear bot token on disconnect
         } else {
           this.socketModeStatus = 'error';
-          this.socketModeMessage = 'Disconnection failed';
+          this.socketModeMessage = 'Stop polling failed';
         }
       },
       error: (error) => {
         this.socketModeStatus = 'error';
-        this.socketModeMessage = error.message || 'Disconnection failed';
-        console.error('Socket mode disconnection error:', error);
+        this.socketModeMessage = error.message || 'Stop polling failed';
+        console.error('Slack polling stop error:', error);
       }
     });
   }
@@ -485,10 +489,8 @@ export class SettingsPageComponent implements OnInit {
     
     this.slackService.getSocketModeStatus().subscribe({
       next: (status) => {
-        this.socketModeStats = {
-          recentEventsCount: status.recentEventsCount,
-          deploymentEventsCount: status.deploymentEventsCount
-        };
+        this.socketModeToken = status.botToken || ''; // Update token
+        this.botToken = status.botToken || ''; // Update bot token
         
         if (status.connected) {
           this.socketModeStatus = 'connected';
