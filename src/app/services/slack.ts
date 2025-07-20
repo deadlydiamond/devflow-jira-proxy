@@ -573,19 +573,14 @@ export class SlackService {
    * Get Vercel Slack socket endpoint URL
    */
   private getSlackSocketUrl(): string {
-    if (window.location.hostname === 'localhost') {
-      // Development: use local socket server
-      return 'http://localhost:3001';
-    } else {
-      // Production: use Vercel backend with stable project URL
-      // Use the current hostname to avoid hardcoding deployment-specific URLs
-      const baseUrl = window.location.origin;
-      return `${baseUrl}/api/slack-socket`;
-    }
+    // Always use Vercel backend - no localhost for socket mode
+    // Vercel serverless functions can't maintain WebSocket connections
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/api/slack-socket`;
   }
 
   /**
-   * Connect to Slack Socket Mode
+   * Connect to Slack Socket Mode (Polling-based)
    */
   connectSocketMode(): Observable<{ success: boolean; message: string; error?: string }> {
     const socketUrl = this.getSlackSocketUrl();
@@ -595,15 +590,15 @@ export class SlackService {
     }).pipe(
       map(response => {
         if (response.success) {
-          this.toastService.success('Connected to Slack Socket Mode');
+          this.toastService.success('Connected to Slack API for event polling');
         } else {
-          this.toastService.error(`Socket Mode connection failed: ${response.error || 'Unknown error'}`);
+          this.toastService.error(`Connection failed: ${response.error || 'Unknown error'}`);
         }
         return response;
       }),
       catchError(error => {
         const errorMessage = error.error?.error || error.message || 'Connection failed';
-        this.toastService.error(`Socket Mode connection failed: ${errorMessage}`);
+        this.toastService.error(`Connection failed: ${errorMessage}`);
         return throwError(() => new Error(errorMessage));
       })
     );
@@ -620,13 +615,13 @@ export class SlackService {
     }).pipe(
       map(response => {
         if (response.success) {
-          this.toastService.success('Disconnected from Slack Socket Mode');
+          this.toastService.success('Disconnected from Slack API');
         }
         return response;
       }),
       catchError(error => {
         const errorMessage = error.error?.error || error.message || 'Disconnection failed';
-        this.toastService.error(`Socket Mode disconnection failed: ${errorMessage}`);
+        this.toastService.error(`Disconnection failed: ${errorMessage}`);
         return throwError(() => new Error(errorMessage));
       })
     );
@@ -640,6 +635,7 @@ export class SlackService {
     hasClient: boolean;
     recentEventsCount: number;
     deploymentEventsCount: number;
+    lastPollTime?: string;
   }> {
     const socketUrl = this.getSlackSocketUrl();
     
@@ -648,6 +644,7 @@ export class SlackService {
       hasClient: boolean;
       recentEventsCount: number;
       deploymentEventsCount: number;
+      lastPollTime?: string;
     }>(socketUrl, {
       action: 'status'
     }).pipe(
@@ -672,6 +669,7 @@ export class SlackService {
     total: number;
     type: string;
     socketModeConnected: boolean;
+    lastPollTime?: string;
   }> {
     const socketUrl = this.getSlackSocketUrl();
     const params: any = { type };
@@ -686,6 +684,7 @@ export class SlackService {
       total: number;
       type: string;
       socketModeConnected: boolean;
+      lastPollTime?: string;
     }>(socketUrl, { params }).pipe(
       catchError(error => {
         console.error('Failed to poll socket mode events:', error);
@@ -696,6 +695,22 @@ export class SlackService {
           type,
           socketModeConnected: false
         });
+      })
+    );
+  }
+
+  /**
+   * Manual poll trigger
+   */
+  triggerPoll(): Observable<{ success: boolean; eventsFound?: any }> {
+    const socketUrl = this.getSlackSocketUrl();
+    
+    return this.http.post<{ success: boolean; eventsFound?: any }>(socketUrl, {
+      action: 'poll'
+    }).pipe(
+      catchError(error => {
+        console.error('Failed to trigger poll:', error);
+        return of({ success: false });
       })
     );
   }

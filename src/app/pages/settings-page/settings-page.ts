@@ -417,4 +417,81 @@ export class SettingsPageComponent implements OnInit {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
+
+  // Socket Mode Methods
+  connectSocketMode(): void {
+    this.socketModeStatus = 'connecting';
+    this.socketModeMessage = 'Connecting to Slack Socket Mode...';
+    
+    this.slackService.connectSocketMode().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.socketModeStatus = 'connected';
+          this.socketModeMessage = response.message;
+          this.checkSocketModeStatus(); // Get stats
+        } else {
+          this.socketModeStatus = 'error';
+          this.socketModeMessage = response.error || 'Connection failed';
+        }
+      },
+      error: (error) => {
+        this.socketModeStatus = 'error';
+        this.socketModeMessage = error.message || 'Connection failed';
+        console.error('Socket mode connection error:', error);
+      }
+    });
+  }
+
+  disconnectSocketMode(): void {
+    this.socketModeStatus = 'disconnected';
+    this.socketModeMessage = 'Disconnecting from Slack Socket Mode...';
+    
+    this.slackService.disconnectSocketMode().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.socketModeStatus = 'idle';
+          this.socketModeMessage = response.message;
+          this.socketModeStats = null;
+        } else {
+          this.socketModeStatus = 'error';
+          this.socketModeMessage = 'Disconnection failed';
+        }
+      },
+      error: (error) => {
+        this.socketModeStatus = 'error';
+        this.socketModeMessage = error.message || 'Disconnection failed';
+        console.error('Socket mode disconnection error:', error);
+      }
+    });
+  }
+
+  checkSocketModeStatus(): void {
+    this.socketModeStatus = 'checking';
+    this.socketModeMessage = 'Checking Socket Mode status...';
+    
+    this.slackService.getSocketModeStatus().subscribe({
+      next: (status) => {
+        this.socketModeStats = {
+          recentEventsCount: status.recentEventsCount,
+          deploymentEventsCount: status.deploymentEventsCount
+        };
+        
+        if (status.connected) {
+          this.socketModeStatus = 'connected';
+          this.socketModeMessage = `Connected to Socket Mode. Recent events: ${status.recentEventsCount}, Deployment events: ${status.deploymentEventsCount}`;
+        } else if (status.hasClient) {
+          this.socketModeStatus = 'connecting';
+          this.socketModeMessage = 'Socket Mode client exists but not connected';
+        } else {
+          this.socketModeStatus = 'idle';
+          this.socketModeMessage = 'Socket Mode not connected';
+        }
+      },
+      error: (error) => {
+        this.socketModeStatus = 'error';
+        this.socketModeMessage = 'Failed to check Socket Mode status';
+        console.error('Socket mode status check error:', error);
+      }
+    });
+  }
 }

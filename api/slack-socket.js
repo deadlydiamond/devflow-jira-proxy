@@ -1,5 +1,4 @@
 const { WebClient } = require('@slack/web-api');
-const { SocketModeClient } = require('@slack/socket-mode');
 
 // Slack configuration
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-your-bot-token-here';
@@ -16,93 +15,9 @@ const MAX_EVENTS = 100;
 let deploymentEvents = [];
 const MAX_DEPLOYMENT_EVENTS = 50;
 
-// Socket mode client (will be initialized when needed)
-let socketModeClient = null;
+// Connection status
 let isConnected = false;
-
-// Initialize socket mode connection
-async function initializeSocketMode() {
-  if (socketModeClient && isConnected) {
-    return { success: true, message: 'Already connected' };
-  }
-
-  try {
-    console.log('🔌 Initializing Slack Socket Mode...');
-    
-    // Create socket mode client
-    socketModeClient = new SocketModeClient({
-      appToken: SLACK_APP_TOKEN,
-      logLevel: 'info'
-    });
-
-    // Handle incoming events
-    socketModeClient.on('events_api', async (event) => {
-      console.log('📨 Received Slack event via socket mode:', JSON.stringify(event, null, 2));
-      
-      const slackEvent = event.body.event;
-      
-      if (slackEvent) {
-        // Check if this is a deployment-related event
-        const isDeploymentEvent = checkIfDeploymentEvent(slackEvent);
-        
-        const eventData = {
-          id: Date.now(),
-          timestamp: new Date().toISOString(),
-          event: slackEvent,
-          type: slackEvent.type || 'unknown',
-          source: 'socket_mode'
-        };
-        
-        // Store in appropriate array
-        if (isDeploymentEvent) {
-          deploymentEvents.unshift(eventData);
-          if (deploymentEvents.length > MAX_DEPLOYMENT_EVENTS) {
-            deploymentEvents = deploymentEvents.slice(0, MAX_DEPLOYMENT_EVENTS);
-          }
-        } else {
-          recentEvents.unshift(eventData);
-          if (recentEvents.length > MAX_EVENTS) {
-            recentEvents = recentEvents.slice(0, MAX_EVENTS);
-          }
-        }
-        
-        console.log(`✅ Stored ${isDeploymentEvent ? 'deployment' : 'general'} event via socket mode`);
-      }
-      
-      // Acknowledge the event
-      await event.ack();
-    });
-
-    // Handle connection events
-    socketModeClient.on('connecting', () => {
-      console.log('🔄 Connecting to Slack Socket Mode...');
-    });
-
-    socketModeClient.on('connected', () => {
-      console.log('✅ Connected to Slack Socket Mode');
-      isConnected = true;
-    });
-
-    socketModeClient.on('disconnected', () => {
-      console.log('❌ Disconnected from Slack Socket Mode');
-      isConnected = false;
-    });
-
-    socketModeClient.on('error', (error) => {
-      console.error('❌ Socket Mode error:', error);
-      isConnected = false;
-    });
-
-    // Start the client
-    await socketModeClient.start();
-    
-    return { success: true, message: 'Socket mode connected successfully' };
-    
-  } catch (error) {
-    console.error('❌ Failed to initialize socket mode:', error);
-    return { success: false, error: error.message };
-  }
-}
+let lastPollTime = null;
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -120,27 +35,67 @@ module.exports = async (req, res) => {
       const { action } = req.body;
       
       if (action === 'connect') {
-        // Initialize socket mode connection
-        const result = await initializeSocketMode();
-        res.status(200).json(result);
+        // Initialize polling-based connection
+        try {
+          console.log('🔌 Initializing Slack polling connection...');
+          
+          // Test the connection by making a simple API call
+          const authTest = await webClient.auth.test();
+          
+          if (authTest.ok) {
+            isConnected = true;
+            lastPollTime = new Date().toISOString();
+            
+            console.log('✅ Connected to Slack API for polling');
+            res.status(200).json({ 
+              success: true, 
+              message: 'Connected to Slack API for event polling',
+              botName: authTest.user,
+              teamName: authTest.team
+            });
+          } else {
+            throw new Error('Slack API authentication failed');
+          }
+        } catch (error) {
+          console.error('❌ Failed to connect to Slack API:', error);
+          isConnected = false;
+          res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Failed to connect to Slack API'
+          });
+        }
         
       } else if (action === 'disconnect') {
-        // Disconnect socket mode
-        if (socketModeClient) {
-          await socketModeClient.disconnect();
-          socketModeClient = null;
-          isConnected = false;
-        }
-        res.status(200).json({ success: true, message: 'Disconnected from socket mode' });
+        // Disconnect polling
+        isConnected = false;
+        lastPollTime = null;
+        res.status(200).json({ success: true, message: 'Disconnected from Slack API' });
         
       } else if (action === 'status') {
         // Get connection status
         res.status(200).json({
           connected: isConnected,
-          hasClient: !!socketModeClient,
+          hasClient: !!webClient,
           recentEventsCount: recentEvents.length,
-          deploymentEventsCount: deploymentEvents.length
+          deploymentEventsCount: deploymentEvents.length,
+          lastPollTime: lastPollTime
         });
+        
+      } else if (action === 'poll') {
+        // Manual polling trigger
+        if (!isConnected) {
+          return res.status(400).json({ error: 'Not connected to Slack API' });
+        }
+        
+        try {
+          // Poll for new messages (this is a simplified example)
+          // In a real implementation, you'd poll specific channels or use Slack's Events API
+          const result = await pollForNewEvents();
+          res.status(200).json({ success: true, eventsFound: result });
+        } catch (error) {
+          console.error('Polling error:', error);
+          res.status(500).json({ error: error.message });
+        }
         
       } else {
         // Handle incoming Slack events (fallback for webhook mode)
@@ -214,7 +169,8 @@ module.exports = async (req, res) => {
         events: events,
         total: type === 'deployment' ? deploymentEvents.length : recentEvents.length,
         type: type || 'general',
-        socketModeConnected: isConnected
+        socketModeConnected: isConnected,
+        lastPollTime: lastPollTime
       });
       
     } else {
@@ -226,6 +182,25 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
+
+// Helper function to poll for new events
+async function pollForNewEvents() {
+  try {
+    // This is a placeholder - in a real implementation, you would:
+    // 1. Get the last message timestamp from your storage
+    // 2. Call Slack API to get messages since that timestamp
+    // 3. Process new messages and store them
+    
+    console.log('🔄 Polling for new events...');
+    lastPollTime = new Date().toISOString();
+    
+    // For now, just return success
+    return { success: true, message: 'Polling completed' };
+  } catch (error) {
+    console.error('Polling error:', error);
+    throw error;
+  }
+}
 
 // Helper function to check if an event is deployment-related
 function checkIfDeploymentEvent(event) {
