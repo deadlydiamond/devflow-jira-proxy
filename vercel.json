@@ -5,10 +5,10 @@
       "maxDuration": 30
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/jira/(.*)",
-      "dest": "/api/jira-proxy.js"
+      "source": "/api/jira/(.*)",
+      "destination": "/api/jira-proxy.js"
     }
   ],
   "headers": [
