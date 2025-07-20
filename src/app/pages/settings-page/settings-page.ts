@@ -76,6 +76,7 @@ export class SettingsPageComponent implements OnInit {
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
 
+  socketModeConnected = false;
   isPolling = false;
   lastPollResult: any = null;
   private pollingSubscription: any = null;
@@ -506,7 +507,7 @@ export class SettingsPageComponent implements OnInit {
   }
 
   startPolling(): void {
-    if (!this.socketModeStatus === 'connected') {
+    if (this.socketModeStatus !== 'connected') {
       this.toastService.error('Must be connected to Slack first');
       return;
     }
@@ -542,7 +543,7 @@ export class SettingsPageComponent implements OnInit {
   }
 
   manualPoll(): void {
-    if (!this.socketModeStatus === 'connected') {
+    if (this.socketModeStatus !== 'connected') {
       this.toastService.error('Must be connected to Slack first');
       return;
     }

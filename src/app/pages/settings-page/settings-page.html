@@ -469,7 +469,7 @@
         <div class="flex items-center space-x-4 mb-3">
           <app-button 
             (click)="startPolling()"
-            [disabled]="!socketModeConnected || isPolling"
+            [disabled]="socketModeStatus !== 'connected' || isPolling"
             variant="primary"
             size="sm">
             Start Polling
@@ -485,8 +485,8 @@
           
           <app-button 
             (click)="manualPoll()"
-            [disabled]="!socketModeConnected"
-            variant="outline"
+            [disabled]="socketModeStatus !== 'connected'"
+            variant="secondary"
             size="sm">
             Manual Poll
           </app-button>
