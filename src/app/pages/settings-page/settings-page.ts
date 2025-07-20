@@ -67,8 +67,6 @@ export class SettingsPageComponent implements OnInit {
   // Slack Socket Mode (now Polling Mode)
   socketModeStatus: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error' | 'checking' = 'idle';
   socketModeMessage: string = '';
-  socketModeToken: string = '';
-  botToken: string = '';
 
   // Polling status
   isPolling: boolean = false;
@@ -432,13 +430,14 @@ export class SettingsPageComponent implements OnInit {
 
   // Socket Mode Methods
   connectSocketMode(): void {
-    if (!this.socketModeToken || !this.botToken) {
+    if (!this.settings.slackSocketToken || !this.settings.slackToken) {
       this.socketModeMessage = 'Please enter both Bot Token and Socket Mode Token';
       return;
     }
 
     this.socketModeStatus = 'connecting';
-    this.slackService.setSocketToken(this.socketModeToken);
+    this.slackService.setSocketToken(this.settings.slackSocketToken);
+    this.slackService.setToken(this.settings.slackToken);
     
     this.slackService.connectSocketMode().subscribe({
       next: (response) => {
@@ -467,8 +466,8 @@ export class SettingsPageComponent implements OnInit {
         if (response.success) {
           this.socketModeStatus = 'idle';
           this.socketModeMessage = response.message;
-          this.socketModeToken = ''; // Clear token on disconnect
-          this.botToken = ''; // Clear bot token on disconnect
+          this.settings.slackSocketToken = ''; // Clear token on disconnect
+          this.settings.slackToken = ''; // Clear bot token on disconnect
         } else {
           this.socketModeStatus = 'error';
           this.socketModeMessage = 'Stop polling failed';
