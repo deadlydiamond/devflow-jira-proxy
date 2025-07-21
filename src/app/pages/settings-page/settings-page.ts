@@ -6,7 +6,6 @@ import { ThemeService } from '../../services/theme';
 import { GitLabService } from '../../services/gitlab';
 import { JiraService } from '../../services/jira';
 import { SlackService } from '../../services/slack';
-import { OpenAiService } from '../../services/openai';
 import { CardComponent } from '../../components/card/card';
 import { ButtonComponent } from '../../components/button/button';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle';
@@ -36,7 +35,6 @@ export class SettingsPageComponent implements OnInit {
   private readonly gitlabService = inject(GitLabService);
   private readonly jiraService = inject(JiraService);
   private readonly slackService = inject(SlackService);
-  private readonly openaiService = inject(OpenAiService);
   private readonly toastService = inject(ToastService);
   
   settings: Settings = {
@@ -60,8 +58,6 @@ export class SettingsPageComponent implements OnInit {
   slackChannels: any[] = [];
   isFetchingChannels = false;
   
-  openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
-  openaiConnectionMessage = '';
 
   ngOnInit(): void {
     this.loadSettings();
@@ -117,12 +113,6 @@ export class SettingsPageComponent implements OnInit {
     if (slackChannelId) {
       this.settings.slackChannelId = slackChannelId;
     }
-
-    // Load OpenAI token from OpenAI Service
-    const openaiToken = this.openaiService.getToken();
-    if (openaiToken) {
-      this.settings.openaiToken = openaiToken;
-    }
   }
 
   saveSettings(): void {
@@ -156,11 +146,6 @@ export class SettingsPageComponent implements OnInit {
     }
     if (this.settings.slackChannelId) {
       this.slackService.setChannelId(this.settings.slackChannelId);
-    }
-
-    // Save OpenAI token to OpenAI Service
-    if (this.settings.openaiToken) {
-      this.openaiService.setToken(this.settings.openaiToken);
     }
     
     this.showSaveMessage();
@@ -300,32 +285,6 @@ export class SettingsPageComponent implements OnInit {
       error: (error: any) => {
         this.slackConnectionStatus = 'error';
         this.slackConnectionMessage = error.message || 'Connection failed';
-      }
-    });
-  }
-
-  testOpenAiConnection(): void {
-    if (!this.settings.openaiToken) {
-      this.openaiConnectionStatus = 'error';
-      this.openaiConnectionMessage = 'Please enter an OpenAI API key first';
-      return;
-    }
-
-    // Reset status and start testing
-    this.openaiConnectionStatus = 'testing';
-    this.openaiConnectionMessage = 'Testing connection...';
-
-    // Temporarily set the token for testing
-    this.openaiService.setToken(this.settings.openaiToken);
-
-    this.openaiService.testToken().subscribe({
-      next: () => {
-        this.openaiConnectionStatus = 'success';
-        this.openaiConnectionMessage = 'Connection successful! OpenAI API is accessible';
-      },
-      error: (error: any) => {
-        this.openaiConnectionStatus = 'error';
-        this.openaiConnectionMessage = error.message || 'Connection failed';
       }
     });
   }

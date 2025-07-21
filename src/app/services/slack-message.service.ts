@@ -43,7 +43,7 @@ export class SlackMessageService {
   public readonly deploymentLinks$ = this._deploymentLinks.asObservable();
   public readonly isListening$ = this._isListening.asObservable();
 
-  private pollingInterval = 10000; // 10 seconds
+  private pollingInterval = 60000; // 1 minute
   private pollSubscription: any = null;
 
   constructor() {
