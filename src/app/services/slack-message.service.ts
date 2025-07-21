@@ -43,57 +43,63 @@ export class SlackMessageService {
   public readonly deploymentLinks$ = this._deploymentLinks.asObservable();
   public readonly isListening$ = this._isListening.asObservable();
 
-  private pollingInterval = 30000; // 30 seconds
-  private lastMessageTimestamp = '';
+  private pollingInterval = 10000; // 10 seconds
+  private pollSubscription: any = null;
 
   constructor() {
     this.loadDeploymentLinks();
-    this.startListening();
+    this.startDirectPolling();
   }
 
   /**
-   * Start listening for Slack events via polling
+   * Start polling Slack conversations.history directly every 10 seconds
    */
-  private startListening(): void {
+  private startDirectPolling(): void {
     if (!this.slackService.getToken() || !this.slackService.getChannelId()) {
-      console.log('Slack not configured, skipping message listening');
+      console.log('Slack not configured, skipping message polling');
       return;
     }
-
     this._isListening.next(true);
-    console.log('🔌 Starting Slack polling listener...');
+    console.log('🔌 Starting direct Slack polling every 10s...');
+    if (this.pollSubscription) {
+      clearInterval(this.pollSubscription);
+    }
+    this.pollSubscription = setInterval(() => {
+      this.fetchLast10Messages();
+    }, this.pollingInterval);
+    // Initial fetch
+    this.fetchLast10Messages();
+  }
 
-    // Use the socket mode polling from slack service instead of timer
-    this.slackService.startDeploymentPolling(this.pollingInterval).pipe(
-      catchError(error => {
-        console.error('Deployment polling error:', error);
-        return of(null);
-      })
-    ).subscribe({
-      next: (result) => {
-        if (result && result.ok && result.events && result.events.length > 0) {
-          console.log(`📨 Found ${result.events.length} deployment events`);
-          
-          // Process the events
-          const deploymentMessages: SlackDeploymentMessage[] = [];
-          
-          for (const event of result.events) {
-            if (event.event && this.isDeploymentMessage(event.event)) {
-              const parsedMessage = this.parseDeploymentMessage(event.event);
-              if (parsedMessage) {
-                deploymentMessages.push(parsedMessage);
-              }
+  /**
+   * Fetch last 10 messages from Slack using conversations.history
+   */
+  private fetchLast10Messages(): void {
+    const channelId = this.slackService.getChannelId();
+    if (!channelId) return;
+    this.slackService.getChannelMessages(channelId, 10).subscribe({
+      next: (messages) => {
+        console.log(`📨 Found ${messages.length} messages`);
+        const deploymentMessages: SlackDeploymentMessage[] = [];
+        for (const message of messages) {
+          if (this.isDeploymentMessage(message)) {
+            const parsedMessage = this.parseDeploymentMessage(message);
+            if (parsedMessage) {
+              deploymentMessages.push(parsedMessage);
             }
           }
-          
-          if (deploymentMessages.length > 0) {
-            console.log(`🚀 Found ${deploymentMessages.length} deployment messages`);
-            this.processNewMessages(deploymentMessages);
-          }
+        }
+        if (deploymentMessages.length > 0) {
+          console.log(`🚀 Found ${deploymentMessages.length} deployment messages`);
+          this.processNewMessages(deploymentMessages);
+        } else {
+          // If no deployment messages, clear
+          this._messages.next([]);
         }
       },
       error: (error) => {
-        console.error('Deployment polling error:', error);
+        console.error('Error fetching Slack messages:', error);
+        this._isListening.next(false);
       }
     });
   }
@@ -648,47 +654,7 @@ export class SlackMessageService {
    * Force refresh messages (for backward compatibility)
    */
   async refreshMessages(): Promise<void> {
-    try {
-      console.log('🔄 Manually refreshing deployment messages...');
-      
-      // Use socket mode polling to get latest deployment events
-      this.slackService.pollSocketModeEvents(undefined, 'deployment').subscribe({
-        next: (result) => {
-          if (result.ok && result.events && result.events.length > 0) {
-            console.log(`📨 Found ${result.events.length} deployment events`);
-            
-            // Process the events
-            const deploymentMessages: SlackDeploymentMessage[] = [];
-            
-            for (const event of result.events) {
-              if (event.event && this.isDeploymentMessage(event.event)) {
-                const parsedMessage = this.parseDeploymentMessage(event.event);
-                if (parsedMessage) {
-                  deploymentMessages.push(parsedMessage);
-                }
-              }
-            }
-            
-            if (deploymentMessages.length > 0) {
-              console.log(`🚀 Found ${deploymentMessages.length} deployment messages`);
-              this.processNewMessages(deploymentMessages);
-              this.toastService.success(`Found ${deploymentMessages.length} new deployment messages`);
-            } else {
-              this.toastService.info('No new deployment messages found');
-            }
-          } else {
-            this.toastService.info('No new deployment events found');
-          }
-        },
-        error: (error) => {
-          console.error('Error refreshing messages:', error);
-          this.toastService.error('Failed to refresh messages');
-        }
-      });
-    } catch (error) {
-      console.error('Error refreshing messages:', error);
-      this.toastService.error('Failed to refresh messages');
-    }
+    this.fetchLast10Messages();
   }
 
   /**
@@ -767,6 +733,6 @@ export class SlackMessageService {
    */
   reconnectSocket(): void {
     console.log('🔄 Reconnecting Slack polling...');
-    this.startListening();
+    this.startDirectPolling();
   }
 } 

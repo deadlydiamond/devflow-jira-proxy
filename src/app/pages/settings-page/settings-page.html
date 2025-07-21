@@ -320,37 +320,6 @@
         </div>
       </div>
       
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Slack Socket Mode Token
-        </label>
-        <input
-          type="password"
-          [(ngModel)]="settings.slackSocketToken"
-          placeholder="xapp-1-..."
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Enable Socket Mode for real-time events:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li>Go to your Slack app settings</li>
-            <li>Navigate to "Socket Mode"</li>
-            <li>Enable Socket Mode</li>
-            <li>Copy the App-Level Token (starts with xapp-)</li>
-            <li>This enables real-time deployment tracking</li>
-          </ul>
-          <div class="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-            <p class="text-green-800 dark:text-green-200 font-medium">🔌 Socket Mode Benefits:</p>
-            <ul class="text-green-700 dark:text-green-300 text-xs mt-1 space-y-1">
-              <li>• Real-time deployment events</li>
-              <li>• No polling required</li>
-              <li>• Lower API rate limits</li>
-              <li>• Better performance</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      
       <!-- Connection Test -->
       <div class="flex items-center space-x-4">
         <app-button 
@@ -383,73 +352,6 @@
             🔄 {{ slackConnectionMessage }}
           </div>
         </div>
-      </div>
-
-      <!-- Socket Mode Connection -->
-      <div class="border-t border-gray-200 dark:border-border pt-4 mt-4">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Slack Event Polling</h4>
-        
-        <div class="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
-          <p class="text-blue-800 dark:text-blue-200 text-xs">
-            <strong>Note:</strong> This uses polling-based event detection since Vercel serverless functions cannot maintain WebSocket connections. 
-            Events are detected by polling the Slack API periodically.
-          </p>
-        </div>
-        
-        <div class="flex items-center space-x-4 mb-3">
-          <app-button 
-            (click)="connectSocketMode()"
-            [disabled]="socketModeStatus === 'connecting' || socketModeStatus === 'connected'"
-            variant="primary"
-            size="sm"
-          >
-            <span *ngIf="socketModeStatus === 'connecting'">Connecting...</span>
-            <span *ngIf="socketModeStatus === 'connected'">Connected</span>
-            <span *ngIf="socketModeStatus !== 'connecting' && socketModeStatus !== 'connected'">Connect Event Polling</span>
-          </app-button>
-          
-          <app-button 
-            (click)="disconnectSocketMode()"
-            [disabled]="socketModeStatus !== 'connected'"
-            variant="secondary"
-            size="sm"
-          >
-            Disconnect
-          </app-button>
-          
-          <app-button 
-            (click)="checkSocketModeStatus()"
-            [disabled]="socketModeStatus === 'checking'"
-            variant="secondary"
-            size="sm"
-          >
-            <span *ngIf="socketModeStatus === 'checking'">Checking...</span>
-            <span *ngIf="socketModeStatus !== 'checking'">Check Status</span>
-          </app-button>
-        </div>
-        
-        <div *ngIf="socketModeMessage" class="mb-3">
-          <div 
-            *ngIf="socketModeStatus === 'connected'"
-            class="text-sm text-green-600 dark:text-green-400"
-          >
-            ✅ {{ socketModeMessage }}
-          </div>
-          <div 
-            *ngIf="socketModeStatus === 'error'"
-            class="text-sm text-red-600 dark:text-red-400"
-          >
-            ❌ {{ socketModeMessage }}
-          </div>
-          <div 
-            *ngIf="socketModeStatus === 'connecting' || socketModeStatus === 'checking'"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
-            🔄 {{ socketModeMessage }}
-          </div>
-        </div>
-        
-        <!-- Polling status will be shown in the polling controls section -->
       </div>
 
       <!-- Polling Controls -->

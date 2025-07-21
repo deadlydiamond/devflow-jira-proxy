@@ -21,8 +21,6 @@ interface Settings {
   jiraEmail: string;
   slackToken: string;
   slackChannelId: string;
-  slackSocketToken: string;
-  openaiToken: string;
 }
 
 @Component({
@@ -50,8 +48,6 @@ export class SettingsPageComponent implements OnInit {
     jiraEmail: '',
     slackToken: '',
     slackChannelId: '',
-    slackSocketToken: '',
-    openaiToken: ''
   };
 
   isDarkMode = false;
@@ -64,21 +60,8 @@ export class SettingsPageComponent implements OnInit {
   slackChannels: any[] = [];
   isFetchingChannels = false;
   
-  // Slack Socket Mode (now Polling Mode)
-  socketModeStatus: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error' | 'checking' = 'idle';
-  socketModeMessage: string = '';
-
-  // Polling status
-  isPolling: boolean = false;
-  lastPollResult: any = null;
-  pollingSubscription: any = null;
-  
   openaiConnectionStatus: 'idle' | 'testing' | 'success' | 'error' = 'idle';
   openaiConnectionMessage = '';
-
-  get socketModeConnected(): boolean {
-    return this.socketModeStatus === 'connected';
-  }
 
   ngOnInit(): void {
     this.loadSettings();
@@ -135,12 +118,6 @@ export class SettingsPageComponent implements OnInit {
       this.settings.slackChannelId = slackChannelId;
     }
 
-    // Load Slack Socket Mode token from SlackService
-    const slackSocketToken = this.slackService.getSocketToken();
-    if (slackSocketToken) {
-      this.settings.slackSocketToken = slackSocketToken;
-    }
-
     // Load OpenAI token from OpenAI Service
     const openaiToken = this.openaiService.getToken();
     if (openaiToken) {
@@ -179,9 +156,6 @@ export class SettingsPageComponent implements OnInit {
     }
     if (this.settings.slackChannelId) {
       this.slackService.setChannelId(this.settings.slackChannelId);
-    }
-    if (this.settings.slackSocketToken) {
-      this.slackService.setSocketToken(this.settings.slackSocketToken);
     }
 
     // Save OpenAI token to OpenAI Service
@@ -426,144 +400,5 @@ export class SettingsPageComponent implements OnInit {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  // Socket Mode Methods
-  connectSocketMode(): void {
-    if (!this.settings.slackSocketToken || !this.settings.slackToken) {
-      this.socketModeMessage = 'Please enter both Bot Token and Socket Mode Token';
-      return;
-    }
-
-    this.socketModeStatus = 'connecting';
-    this.slackService.setSocketToken(this.settings.slackSocketToken);
-    this.slackService.setToken(this.settings.slackToken);
-    
-    this.slackService.connectSocketMode().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.socketModeStatus = 'connected';
-          this.socketModeMessage = 'Slack tokens validated successfully';
-          this.checkSocketModeStatus(); // Get stats
-        } else {
-          this.socketModeStatus = 'error';
-          this.socketModeMessage = response.error || 'Token validation failed';
-        }
-      },
-      error: (error) => {
-        this.socketModeStatus = 'error';
-        this.socketModeMessage = error.message || 'Token validation failed';
-      }
-    });
-  }
-
-  disconnectSocketMode(): void {
-    this.socketModeStatus = 'disconnected';
-    this.socketModeMessage = 'Stopping Slack polling...';
-    
-    this.slackService.disconnectSocketMode().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.socketModeStatus = 'idle';
-          this.socketModeMessage = response.message;
-          this.settings.slackSocketToken = ''; // Clear token on disconnect
-          this.settings.slackToken = ''; // Clear bot token on disconnect
-        } else {
-          this.socketModeStatus = 'error';
-          this.socketModeMessage = 'Stop polling failed';
-        }
-      },
-      error: (error) => {
-        this.socketModeStatus = 'error';
-        this.socketModeMessage = error.message || 'Stop polling failed';
-        console.error('Slack polling stop error:', error);
-      }
-    });
-  }
-
-  checkSocketModeStatus(): void {
-    this.socketModeStatus = 'checking';
-    this.socketModeMessage = 'Checking Slack polling status...';
-    
-    this.slackService.getSocketModeStatus().subscribe({
-      next: (status) => {
-        if (status.connected) {
-          this.socketModeStatus = 'connected';
-          this.socketModeMessage = `Connected to Slack polling. Recent events: ${status.recentEventsCount}, Deployment events: ${status.deploymentEventsCount}`;
-        } else if (status.hasClient) {
-          this.socketModeStatus = 'connecting';
-          this.socketModeMessage = 'Slack polling client exists but not connected';
-        } else {
-          this.socketModeStatus = 'idle';
-          this.socketModeMessage = 'Slack polling not connected';
-        }
-      },
-      error: (error) => {
-        this.socketModeStatus = 'error';
-        this.socketModeMessage = 'Failed to check Slack polling status';
-        console.error('Slack polling status check error:', error);
-      }
-    });
-  }
-
-  startPolling(): void {
-    if (this.socketModeStatus !== 'connected') {
-      this.toastService.error('Must be connected to Slack first');
-      return;
-    }
-
-    this.isPolling = true;
-    this.pollingSubscription = this.slackService.startMessagePolling(10000).subscribe({
-      next: (result) => {
-        this.lastPollResult = {
-          ...result,
-          timestamp: new Date()
-        };
-        if (result.events.length > 0) {
-          this.toastService.success(`Found ${result.events.length} new messages`);
-        }
-      },
-      error: (error) => {
-        console.error('Polling error:', error);
-        this.toastService.error('Polling failed: ' + error.message);
-        this.isPolling = false;
-      }
-    });
-
-    this.toastService.success('Started polling for messages');
-  }
-
-  stopPolling(): void {
-    if (this.pollingSubscription) {
-      this.pollingSubscription.unsubscribe();
-      this.pollingSubscription = null;
-    }
-    this.isPolling = false;
-    this.toastService.success('Stopped polling');
-  }
-
-  manualPoll(): void {
-    if (this.socketModeStatus !== 'connected') {
-      this.toastService.error('Must be connected to Slack first');
-      return;
-    }
-
-    this.slackService.pollSocketModeEvents('general').subscribe({
-      next: (result) => {
-        this.lastPollResult = {
-          ...result,
-          timestamp: new Date()
-        };
-        if (result.events.length > 0) {
-          this.toastService.success(`Found ${result.events.length} new messages`);
-        } else {
-          this.toastService.info('No new messages found');
-        }
-      },
-      error: (error) => {
-        console.error('Manual poll error:', error);
-        this.toastService.error('Manual poll failed: ' + error.message);
-      }
-    });
   }
 }
