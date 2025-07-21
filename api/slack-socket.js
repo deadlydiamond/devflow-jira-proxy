@@ -231,47 +231,41 @@ async function pollForNewEvents() {
         
         if (messagesResponse.ok && messagesResponse.messages) {
           for (const message of messagesResponse.messages) {
-            // Skip bot messages and messages we've already seen
-            if (message.bot_id || message.subtype === 'bot_message') {
-              continue;
-            }
-            
-            // Check if we already have this message
+            // Only skip if we've already seen this message
             const existingEvent = recentEvents.find(e => 
               e.event.ts === message.ts && e.event.channel === message.channel
             );
-            
-            if (!existingEvent) {
-              const eventData = {
-                id: Date.now() + Math.random(),
-                timestamp: new Date(parseFloat(message.ts) * 1000).toISOString(),
-                event: {
-                  ...message,
-                  channel_name: channel.name,
-                  channel_id: channel.id
-                },
-                type: 'message',
-                source: 'polling'
-              };
-              
-              // Check if this is a deployment-related event
-              const isDeploymentEvent = checkIfDeploymentEvent(message);
-              
-              if (isDeploymentEvent) {
-                deploymentEvents.unshift(eventData);
-                if (deploymentEvents.length > MAX_DEPLOYMENT_EVENTS) {
-                  deploymentEvents = deploymentEvents.slice(0, MAX_DEPLOYMENT_EVENTS);
-                }
-              } else {
-                recentEvents.unshift(eventData);
-                if (recentEvents.length > MAX_EVENTS) {
-                  recentEvents = recentEvents.slice(0, MAX_EVENTS);
-                }
+            if (existingEvent) continue;
+
+            // Check if this is a deployment-related event
+            const isDeploymentEvent = checkIfDeploymentEvent(message);
+
+            const eventData = {
+              id: Date.now() + Math.random(),
+              timestamp: new Date(parseFloat(message.ts) * 1000).toISOString(),
+              event: {
+                ...message,
+                channel_name: channel.name,
+                channel_id: channel.id
+              },
+              type: 'message',
+              source: 'polling'
+            };
+
+            if (isDeploymentEvent) {
+              deploymentEvents.unshift(eventData);
+              if (deploymentEvents.length > MAX_DEPLOYMENT_EVENTS) {
+                deploymentEvents = deploymentEvents.slice(0, MAX_DEPLOYMENT_EVENTS);
               }
-              
-              newEventsFound++;
-              console.log(`📨 Found new message in #${channel.name}: ${message.text?.substring(0, 50)}...`);
+            } else {
+              recentEvents.unshift(eventData);
+              if (recentEvents.length > MAX_EVENTS) {
+                recentEvents = recentEvents.slice(0, MAX_EVENTS);
+              }
             }
+
+            newEventsFound++;
+            console.log(`📨 Found new message in #${channel.name}: ${message.text?.substring(0, 50)}...`);
           }
         }
       } catch (channelError) {
@@ -291,13 +285,24 @@ async function pollForNewEvents() {
 
 // Helper function to check if an event is deployment-related
 function checkIfDeploymentEvent(event) {
-  if (!event || !event.text) return false;
-  
+  if (!event) return false;
+  let text = event.text || '';
+  if (event.attachments && event.attachments.length > 0) {
+    if (event.attachments[0].fallback) {
+      text += ' ' + event.attachments[0].fallback;
+    }
+    if (
+      event.attachments[0].fields &&
+      event.attachments[0].fields.length > 0 &&
+      event.attachments[0].fields[0].value
+    ) {
+      text += ' ' + event.attachments[0].fields[0].value;
+    }
+  }
+  text = text.toLowerCase();
   const deploymentKeywords = [
     'deploy', 'deployment', 'jenkins', 'pipeline', 'build', 'release',
-    'staging', 'production', 'successful', 'failed', 'job', 'build'
+    'staging', 'production', 'successful', 'failed', 'job'
   ];
-  
-  const text = event.text.toLowerCase();
   return deploymentKeywords.some(keyword => text.includes(keyword));
 } 
