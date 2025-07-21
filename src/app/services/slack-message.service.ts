@@ -129,7 +129,18 @@ export class SlackMessageService {
     
     // Check if text matches deployment pattern - make it more flexible
     const deploymentPatterns = [
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'/,
+      // Patterns for URLs in parentheses (Jenkins format)
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
+      // Existing patterns for URLs in angle brackets
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(<([^>]+)>\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(<([^>]+)>\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
+      // Existing fallback patterns
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]/,
       /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]/,
@@ -185,11 +196,18 @@ export class SlackMessageService {
     // Parse deployment message with multiple patterns
     console.log(`🔍 Testing regex on text: "${text}"`);
     const deploymentPatterns = [
+      // Patterns for URLs in parentheses (Jenkins format)
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
+      // Existing patterns for URLs in angle brackets
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'/,
+      // Existing fallback patterns
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]/,
       /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]/,
