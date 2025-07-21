@@ -52,13 +52,13 @@
   <div class="flex items-center justify-between mt-3 pt-3 border-t border-border">
     <div class="flex items-center space-x-2">
       <!-- Track/Untrack Button -->
-      <button *ngIf="!isTracked() && message.jobId"
+      <button *ngIf="!isTracked() && message.jobId && (message.status === 'SUCCESSFUL' || message.status === 'FAILED' || message.status === 'STARTED')"
               (click)="onTrackClick()"
               [disabled]="!isJiraConfigured()"
               class="btn btn-primary btn-sm"
               [class.opacity-50]="!isJiraConfigured()"
               [title]="!isJiraConfigured() ? 'Configure Jira in Settings first' : 'Link to Jira issue'">
-        <span *ngIf="isJiraConfigured()">🔗 Track Deployment</span>
+        <span *ngIf="isJiraConfigured()">🔗 Start Tracking</span>
         <span *ngIf="!isJiraConfigured()">⚠️ Configure Jira</span>
       </button>
       
