@@ -129,24 +129,16 @@ export class SlackMessageService {
     
     // Check if text matches deployment pattern - make it more flexible
     const deploymentPatterns = [
-      // Patterns for URLs in parentheses (Jenkins format)
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(([^)]+)\)/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(([^)]+)\)/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(([^)]+)\)/,
+      // Parentheses, with or without angle brackets, single or double quotes
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\((<)?([^)>]+)(>)?\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\((<)?([^)>]+)(>)?\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\((<)?([^)>]+)(>)?\)/,
+      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\((<)?([^)>]+)(>)?\)/,
       // Existing patterns for URLs in angle brackets
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
       /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]\s*\(<([^>]+)>\)/,
-      // Existing fallback patterns
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+'([^']+)\s+\[(\d+)\]'\s*/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+"([^"]+)\s+\[(\d+)\]"/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*Job\s+([^\s]+)\s+\[(\d+)\]/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)\s+\[(\d+)\]/,
-      /(STARTED|SUCCESSFUL|FAILED):\s*([^\s]+)/,  // Most flexible
-      /Successfully parsed deployment:\s*(STARTED|SUCCESSFUL|FAILED)\s*-\s*([^\s]+)\s+\[(\d+)\]/,  // Test message format
-      /(STARTED|SUCCESSFUL|FAILED)\s*-\s*([^\s]+)\s+\[(\d+)\]/  // Simple format
     ];
     
     console.log(`🔍 Testing text: "${text}"`);
