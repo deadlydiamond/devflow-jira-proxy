@@ -369,6 +369,75 @@
     </div>
   </app-card>
 
+  <!-- OpenAI Integration -->
+  <app-card title="OpenAI Integration" subtitle="Configure OpenAI API for AI-powered features">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+          OpenAI API Token
+        </label>
+        <input
+          type="password"
+          [(ngModel)]="settings.openaiToken"
+          placeholder="sk-..."
+          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+        />
+        <div *ngIf="openaiConnectionStatus !== 'success'" class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
+          <p>Get your OpenAI API token:</p>
+          <ul class="list-disc list-inside ml-2 space-y-1">
+            <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OpenAI Platform</a></li>
+            <li>Sign in to your OpenAI account</li>
+            <li>Click "Create new secret key"</li>
+            <li>Give it a name (e.g., "DevFlow App")</li>
+            <li>Copy the generated token (starts with sk-)</li>
+            <li><strong>Important:</strong> Keep your token secure and never share it</li>
+          </ul>
+          <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+            <p class="text-blue-800 dark:text-blue-200 font-medium text-xs">AI Features:</p>
+            <p class="text-blue-700 dark:text-blue-300 text-xs">
+              This token enables AI-powered features like task estimation, code review checklists, 
+              test case generation, and smart task suggestions.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Connection Test -->
+      <div class="flex items-center space-x-4">
+        <app-button 
+          (click)="testOpenAIConnection()"
+          [disabled]="openaiConnectionStatus === 'testing'"
+          variant="secondary"
+        >
+          <span *ngIf="openaiConnectionStatus === 'testing'">Testing...</span>
+          <span *ngIf="openaiConnectionStatus === 'success'">Test Again</span>
+          <span *ngIf="openaiConnectionStatus !== 'testing' && openaiConnectionStatus !== 'success'">Test Connection</span>
+        </app-button>
+        
+        <div *ngIf="openaiConnectionMessage" class="flex-1">
+          <div 
+            *ngIf="openaiConnectionStatus === 'success'"
+            class="text-sm text-green-600 dark:text-green-400"
+          >
+            ✅ {{ openaiConnectionMessage }}
+          </div>
+          <div 
+            *ngIf="openaiConnectionStatus === 'error'"
+            class="text-sm text-red-600 dark:text-red-400"
+          >
+            ❌ {{ openaiConnectionMessage }}
+          </div>
+          <div 
+            *ngIf="openaiConnectionStatus === 'testing'"
+            class="text-sm text-blue-600 dark:text-blue-400"
+          >
+            🔄 {{ openaiConnectionMessage }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card>
+
   <!-- Storage Information -->
   <app-card title="Storage Information" subtitle="Local data usage">
     <div class="space-y-4">
