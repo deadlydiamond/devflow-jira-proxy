@@ -4,16 +4,13 @@
   "outputDirectory": "dist/devflow/browser",
   "functions": {
     "api/jira-proxy.js": {
-      "maxDuration": 30,
-      "runtime": "nodejs18.x"
+      "maxDuration": 30
     },
     "api/slack-socket.js": {
-      "maxDuration": 30,
-      "runtime": "nodejs18.x"
+      "maxDuration": 30
     },
     "api/slack-proxy.js": {
-      "maxDuration": 30,
-      "runtime": "nodejs18.x"
+      "maxDuration": 30
     }
   },
   "rewrites": [
