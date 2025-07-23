@@ -12,18 +12,7 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/api/jira/(.*)",
-      "destination": "/api/jira-proxy.js"
-    },
-    {
-      "source": "/api/slack-socket",
-      "destination": "/api/slack-socket.js"
-    },
-    {
-      "source": "/api/slack/(.*)",
-      "destination": "/api/slack-proxy.js"
-    }
+    { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
     {
