@@ -1,123 +1,96 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
+  console.log('Jira proxy called:', { method: req.method, url: req.url, headers: req.headers });
+  
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Jira-URL, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Jira-URL');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  const { method, url, headers, body } = req;
-  
-  // Extract the Jira API path from the request
-  const jiraPath = url.replace('/api/jira', '');
-  
-  // Get the Jira base URL from headers or use default
-  let jiraBaseUrl = headers['x-jira-url'] || 'https://whitehelmet.atlassian.net';
-  
-  // Ensure the URL has a protocol
-  if (!jiraBaseUrl.startsWith('http')) {
-    jiraBaseUrl = `https://${jiraBaseUrl}`;
-  }
-  
-  const jiraUrl = `${jiraBaseUrl}${jiraPath}`;
-  
-  // Parse the hostname from the Jira URL
-  const urlObj = new URL(jiraBaseUrl);
-  
-  // Forward the request to Jira
-  const options = {
-    hostname: urlObj.hostname,
-    port: 443,
-    path: jiraPath,
-    method: method,
-    headers: {
-      'Content-Type': headers['content-type'] || 'application/json',
-      'Authorization': headers.authorization,
-      'User-Agent': headers['user-agent'] || 'DevFlow-App/1.0',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Accept': 'application/json',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    }
-  };
-
-  // Add XSRF headers - these are crucial for Jira
-  if (headers['x-atlassian-token']) {
-    options.headers['X-Atlassian-Token'] = headers['x-atlassian-token'];
-  } else {
-    // Use the standard no-check token for Jira
-    options.headers['X-Atlassian-Token'] = 'no-check';
-  }
-  
-  if (headers['x-ausername']) {
-    options.headers['X-AUSERNAME'] = headers['x-ausername'];
-  }
-
-  // Add Origin and Referer headers for XSRF protection
-  if (headers.origin) {
-    options.headers['Origin'] = headers.origin;
-  }
-  if (headers.referer) {
-    options.headers['Referer'] = headers.referer;
-  }
-
-  // Special handling for transitions endpoint
-  const isTransitionsEndpoint = jiraPath.includes('/transitions');
-  const isPostRequest = method === 'POST';
-  
-  // For transitions endpoint, ensure we have proper XSRF headers
-  if (isTransitionsEndpoint) {
-    options.headers['X-Atlassian-Token'] = 'no-check';
-    options.headers['X-AUSERNAME'] = headers['x-ausername'] || 'admin';
-    options.headers['X-Requested-With'] = 'XMLHttpRequest';
+  try {
+    const { method, url, headers } = req;
     
-    // For POST requests to transitions, add additional headers
-    if (isPostRequest) {
-      options.headers['Content-Type'] = 'application/json';
-      options.headers['Accept'] = 'application/json';
+    // Parse body for non-GET requests
+    let body = null;
+    if (method !== 'GET' && req.body) {
+      body = req.body;
     }
-  }
+  
+    // Extract the Jira API path from the request
+    const jiraPath = url.replace('/api/jira', '');
+    
+    // Get the Jira base URL from headers or use default
+    let jiraBaseUrl = headers['x-jira-url'] || 'https://whitehelmet.atlassian.net';
+    
+    // Ensure the URL has a protocol
+    if (!jiraBaseUrl.startsWith('http')) {
+      jiraBaseUrl = `https://${jiraBaseUrl}`;
+    }
+    
+    const jiraUrl = `${jiraBaseUrl}${jiraPath}`;
+    
+    // Parse the hostname from the Jira URL
+    const urlObj = new URL(jiraBaseUrl);
 
-  return new Promise((resolve, reject) => {
-    const jiraReq = https.request(options, (jiraRes) => {
-      let data = '';
-      
-      jiraRes.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      jiraRes.on('end', () => {
-        // Forward Jira's response headers
-        Object.keys(jiraRes.headers).forEach(key => {
-          if (key.toLowerCase() !== 'transfer-encoding') {
-            res.setHeader(key, jiraRes.headers[key]);
-          }
+    // Only forward minimal headers for API token auth
+    // STRIP all browser/XSRF/cookie headers
+    const options = {
+      hostname: urlObj.hostname,
+      port: 443,
+      path: jiraPath,
+      method: method,
+      headers: {
+        'Content-Type': headers['content-type'] || 'application/json',
+        'Authorization': headers.authorization, // Should be Basic base64(email:api_token)
+        'Accept': 'application/json',
+        // No User-Agent, cookies, XSRF, or browser headers
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      const jiraReq = https.request(options, (jiraRes) => {
+        let data = '';
+        
+        jiraRes.on('data', (chunk) => {
+          data += chunk;
         });
         
-        res.status(jiraRes.statusCode);
-        res.end(data);
+        jiraRes.on('end', () => {
+          // Forward Jira's response headers
+          Object.keys(jiraRes.headers).forEach(key => {
+            if (key.toLowerCase() !== 'transfer-encoding') {
+              res.setHeader(key, jiraRes.headers[key]);
+            }
+          });
+          
+          res.status(jiraRes.statusCode);
+          res.end(data);
+          resolve();
+        });
+      });
+
+      jiraReq.on('error', (error) => {
+        console.error('Proxy error:', error);
+        res.status(500).json({ error: 'Proxy error', message: error.message });
         resolve();
       });
-    });
 
-    jiraReq.on('error', (error) => {
-      console.error('Proxy error:', error);
-      res.status(500).json({ error: 'Proxy error', message: error.message });
-      resolve();
+      // Send request body if present and method is not GET
+      if (body && method !== 'GET') {
+        const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
+        jiraReq.write(bodyString);
+      }
+      
+      jiraReq.end();
     });
-
-    // Send request body if present and method is not GET
-    if (body && method !== 'GET') {
-      const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
-      jiraReq.write(bodyString);
-    }
-    
-    jiraReq.end();
-  });
+  } catch (error) {
+    console.error('Jira proxy error:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 }; 
