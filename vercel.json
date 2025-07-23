@@ -15,8 +15,16 @@
   },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/jira/(.*)",
+      "destination": "/api/jira-proxy"
+    },
+    {
+      "source": "/api/slack/(.*)",
+      "destination": "/api/slack-proxy"
+    },
+    {
+      "source": "/api/slack-socket/(.*)",
+      "destination": "/api/slack-socket"
     },
     {
       "source": "/(.*)",

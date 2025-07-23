@@ -1,6 +1,8 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
+  console.log('Slack proxy called:', { method: req.method, url: req.url, headers: req.headers });
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -29,9 +31,11 @@ module.exports = async (req, res) => {
     // Extract the Slack API endpoint from the URL
     // URL format: /api/slack/auth.test -> /auth.test
     const slackEndpoint = url.replace('/api/slack', '');
+    console.log('Slack endpoint:', slackEndpoint);
     
     // Prepare the request to Slack API
     const slackUrl = `https://slack.com/api${slackEndpoint}`;
+    console.log('Proxying to:', slackUrl);
     
     // Prepare request options
     const options = {
@@ -60,6 +64,7 @@ module.exports = async (req, res) => {
       });
       
       slackRes.on('end', () => {
+        console.log('Slack response status:', slackRes.statusCode);
         try {
           const response = JSON.parse(data);
           

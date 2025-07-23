@@ -23,6 +23,7 @@ module.exports = async (req, res) => {
     }
   
     // Extract the Jira API path from the request
+    // URL format: /api/jira/rest/api/3/myself -> /rest/api/3/myself
     const jiraPath = url.replace('/api/jira', '');
     
     // Get the Jira base URL from headers or use default
@@ -34,12 +35,12 @@ module.exports = async (req, res) => {
     }
     
     const jiraUrl = `${jiraBaseUrl}${jiraPath}`;
+    console.log('Proxying to:', jiraUrl);
     
     // Parse the hostname from the Jira URL
     const urlObj = new URL(jiraBaseUrl);
 
     // Only forward minimal headers for API token auth
-    // STRIP all browser/XSRF/cookie headers
     const options = {
       hostname: urlObj.hostname,
       port: 443,
@@ -49,7 +50,6 @@ module.exports = async (req, res) => {
         'Content-Type': headers['content-type'] || 'application/json',
         'Authorization': headers.authorization, // Should be Basic base64(email:api_token)
         'Accept': 'application/json',
-        // No User-Agent, cookies, XSRF, or browser headers
       }
     };
 
@@ -62,6 +62,8 @@ module.exports = async (req, res) => {
         });
         
         jiraRes.on('end', () => {
+          console.log('Jira response status:', jiraRes.statusCode);
+          
           // Forward Jira's response headers
           Object.keys(jiraRes.headers).forEach(key => {
             if (key.toLowerCase() !== 'transfer-encoding') {
