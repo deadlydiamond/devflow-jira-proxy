@@ -4,13 +4,16 @@
   "outputDirectory": "dist/devflow/browser",
   "functions": {
     "api/jira-proxy.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs18.x"
     },
     "api/slack-socket.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs18.x"
     },
     "api/slack-proxy.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs18.x"
     }
   },
   "rewrites": [
@@ -37,7 +40,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Slack-Token"
+          "value": "Content-Type, Authorization, X-Atlassian-Token, X-AUSERNAME, X-Slack-Token, X-Jira-URL, X-Requested-With"
         }
       ]
     }
