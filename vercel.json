@@ -12,6 +12,9 @@
     },
     "api/slack-proxy.js": {
       "maxDuration": 30
+    },
+    "api/supabase-database.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -26,6 +29,10 @@
     {
       "source": "/api/slack-socket/(.*)",
       "destination": "/api/slack-socket"
+    },
+    {
+      "source": "/api/supabase-database/(.*)",
+      "destination": "/api/supabase-database"
     },
     {
       "source": "/(.*)",

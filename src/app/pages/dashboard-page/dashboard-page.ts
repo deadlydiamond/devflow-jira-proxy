@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LocalStorageService } from '../../services/local-storage';
 import { JiraService } from '../../services/jira';
-import { CardComponent } from '../../components/card/card';
 
 interface PinnedStory {
   key: string;
@@ -24,7 +23,7 @@ interface LastAction {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.css'
 })

@@ -1,146 +1,162 @@
-<div class="space-y-6">
-  <!-- Integration Status Section -->
-  <app-card title="Integration Status" subtitle="Check your Jira and Slack connections">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Jira Integration -->
-      <div class="p-4 border border-border rounded-lg">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-medium text-text-light">Jira Integration</h3>
-          <span class="text-sm px-2 py-1 rounded-full" 
-                [class]="isJiraConnected() ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'">
-            {{ isJiraConnected() ? 'Connected' : 'Not Connected' }}
-          </span>
-        </div>
-        <p class="text-sm text-text-light/70 mb-3">
-          {{ isJiraConnected() ? 'Jira API is configured and working' : 'Configure Jira credentials in Settings' }}
-        </p>
-        <div class="text-xs text-text-light/50">
-          <div>Instance: {{ getJiraUrl() || 'Not set' }}</div>
-          <div>User: {{ getJiraEmail() || 'Not set' }}</div>
-        </div>
+<div class="min-h-screen bg-primary p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-primary mb-2">Dashboard</h1>
+        <p class="text-secondary">Welcome to your development workflow hub</p>
       </div>
 
-      <!-- Slack Integration -->
-      <div class="p-4 border border-border rounded-lg">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-medium text-text-light">Slack Integration</h3>
-          <span class="text-sm px-2 py-1 rounded-full" 
-                [class]="isSlackConnected() ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'">
-            {{ isSlackConnected() ? 'Connected' : 'Not Connected' }}
-          </span>
-        </div>
-        <p class="text-sm text-text-light/70 mb-3">
-          {{ isSlackConnected() ? 'Slack webhook is configured for deployment tracking' : 'Configure Slack webhook in Settings' }}
-        </p>
-        <div class="text-xs text-text-light/50">
-          <div>Channel: {{ getSlackChannel() || 'Not set' }}</div>
-          <div>Webhook: {{ isSlackConnected() ? 'Configured' : 'Not configured' }}</div>
-        </div>
-      </div>
-    </div>
-  </app-card>
-
-  <!-- Current Sprint Overview -->
-  <app-card title="Current Sprint" subtitle="Quick overview of your active sprint" *ngIf="getCurrentSprint()">
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="font-medium text-text-light">{{ getCurrentSprint()?.name }}</h3>
-        <span class="text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-          {{ getCurrentSprint()?.state }}
-        </span>
-      </div>
-      
-      <div class="grid grid-cols-3 gap-4">
-        <div class="text-center p-3 bg-surface/50 rounded-lg">
-          <div class="text-xl font-bold text-text-light">{{ getSprintStats().total }}</div>
-          <div class="text-xs text-text-light/70">Total Stories</div>
-        </div>
-        <div class="text-center p-3 bg-surface/50 rounded-lg">
-          <div class="text-xl font-bold text-green-600">{{ getSprintStats().completed }}</div>
-          <div class="text-xs text-text-light/70">Completed</div>
-        </div>
-        <div class="text-center p-3 bg-surface/50 rounded-lg">
-          <div class="text-xl font-bold text-blue-600">{{ getSprintStats().inProgress }}</div>
-          <div class="text-xs text-text-light/70">In Progress</div>
-        </div>
-      </div>
-
-      <div class="text-xs text-text-light/50">
-        <div>{{ getCurrentSprint()?.startDate | date:'shortDate' }} - {{ getCurrentSprint()?.endDate | date:'shortDate' }}</div>
-      </div>
-    </div>
-  </app-card>
-
-
-
-  <!-- Pinned Stories Section -->
-  <app-card title="Pinned Stories" subtitle="Your important stories at a glance">
-    <div class="space-y-4">
-      <div *ngIf="getPinnedStories().length === 0" class="text-center py-8">
-        <div class="text-text-light/50 mb-2">📌</div>
-        <p class="text-text-light/70">No pinned stories yet</p>
-        <p class="text-sm text-text-light/50 mt-1">
-          Pin important stories in Sprint Workspace to see them here
-        </p>
-      </div>
-      
-      <div *ngIf="getPinnedStories().length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div 
-          *ngFor="let story of getPinnedStories()"
-          class="p-4 border border-border rounded-lg bg-card hover:shadow-md transition-shadow cursor-pointer"
-          (click)="openSprintWorkspace()"
-        >
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex-1">
-              <h3 class="font-medium text-text-light mb-1">
-                {{ story.summary }}
-              </h3>
-              <p class="text-sm text-text-light/70 mb-2 font-mono">
-                {{ story.key }}
-              </p>
+      <!-- Integration Status Section -->
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold text-primary mb-4">Integration Status</h2>
+        <p class="text-tertiary mb-6">Check your Jira and Slack connections</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Jira Integration -->
+          <div class="surface-secondary p-4 rounded-xl border border-primary">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-primary">Jira Integration</h3>
+              <span class="text-sm px-3 py-1 rounded-full glass-light" 
+                    [class]="isJiraConnected() ? 'status-success' : 'status-error'">
+                {{ isJiraConnected() ? 'Connected' : 'Not Connected' }}
+              </span>
+            </div>
+            <p class="text-sm text-tertiary mb-3">
+              {{ isJiraConnected() ? 'Jira API is configured and working' : 'Configure Jira credentials in Settings' }}
+            </p>
+            <div class="text-xs text-quaternary">
+              <div>Instance: {{ getJiraUrl() || 'Not set' }}</div>
+              <div>User: {{ getJiraEmail() || 'Not set' }}</div>
             </div>
           </div>
-          
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span 
-                class="px-2 py-1 text-xs font-medium rounded-full"
-                [class]="getStatusColor(story.status)"
-              >
-                {{ story.status }}
-              </span>
-              <span 
-                class="text-xs font-medium"
-                [class]="getPriorityColor(story.priority)"
-              >
-                {{ story.priority }}
+
+          <!-- Slack Integration -->
+          <div class="surface-secondary p-4 rounded-xl border border-primary">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-primary">Slack Integration</h3>
+              <span class="text-sm px-3 py-1 rounded-full glass-light" 
+                    [class]="isSlackConnected() ? 'status-success' : 'status-error'">
+                {{ isSlackConnected() ? 'Connected' : 'Not Connected' }}
               </span>
             </div>
-            <span class="text-xs text-text-light/50">
-              {{ story.assignee || 'Unassigned' }}
+            <p class="text-sm text-tertiary mb-3">
+              {{ isSlackConnected() ? 'Slack webhook is configured for deployment tracking' : 'Configure Slack webhook in Settings' }}
+            </p>
+            <div class="text-xs text-quaternary">
+              <div>Channel: {{ getSlackChannel() || 'Not set' }}</div>
+              <div>Webhook: {{ isSlackConnected() ? 'Configured' : 'Not configured' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Sprint Overview -->
+      <div class="card p-6" *ngIf="getCurrentSprint()">
+        <h2 class="text-xl font-semibold text-primary mb-4">Current Sprint</h2>
+        <p class="text-tertiary mb-6">Quick overview of your active sprint</p>
+        
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-medium text-primary">{{ getCurrentSprint()?.name }}</h3>
+            <span class="text-sm px-3 py-1 rounded-full status-info">
+              {{ getCurrentSprint()?.state }}
             </span>
           </div>
+          
+          <div class="grid grid-cols-3 gap-4">
+            <div class="text-center p-4 surface-secondary rounded-xl border border-primary">
+              <div class="text-2xl font-bold text-primary">{{ getSprintStats().total }}</div>
+              <div class="text-xs text-tertiary">Total Stories</div>
+            </div>
+            <div class="text-center p-4 surface-secondary rounded-xl border border-primary">
+              <div class="text-2xl font-bold status-success">{{ getSprintStats().completed }}</div>
+              <div class="text-xs text-tertiary">Completed</div>
+            </div>
+            <div class="text-center p-4 surface-secondary rounded-xl border border-primary">
+              <div class="text-2xl font-bold status-info">{{ getSprintStats().inProgress }}</div>
+              <div class="text-xs text-tertiary">In Progress</div>
+            </div>
+          </div>
+
+          <div class="text-xs text-quaternary">
+            <div>{{ getCurrentSprint()?.startDate | date:'shortDate' }} - {{ getCurrentSprint()?.endDate | date:'shortDate' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned Stories Section -->
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold text-primary mb-4">Pinned Stories</h2>
+        <p class="text-tertiary mb-6">Your important stories at a glance</p>
+        
+        <div class="space-y-4">
+          <div *ngIf="getPinnedStories().length === 0" class="text-center py-8">
+            <div class="text-quaternary mb-2 text-4xl">📌</div>
+            <p class="text-tertiary">No pinned stories yet</p>
+            <p class="text-sm text-quaternary mt-1">
+              Pin important stories in Sprint Workspace to see them here
+            </p>
+          </div>
+          
+          <div *ngIf="getPinnedStories().length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div 
+              *ngFor="let story of getPinnedStories()"
+              class="surface-secondary p-4 rounded-xl border border-primary hover:bg-surface-tertiary transition-all duration-200 cursor-pointer hover-lift"
+              (click)="openSprintWorkspace()"
+            >
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <h3 class="font-medium text-primary mb-1">
+                    {{ story.summary }}
+                  </h3>
+                  <p class="text-sm text-tertiary mb-2 font-mono">
+                    {{ story.key }}
+                  </p>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span 
+                    class="px-2 py-1 text-xs font-medium rounded-full glass-light"
+                  >
+                    {{ story.status }}
+                  </span>
+                  <span 
+                    class="text-xs font-medium text-secondary"
+                  >
+                    {{ story.priority }}
+                  </span>
+                </div>
+                <span class="text-xs text-quaternary">
+                  {{ story.assignee || 'Unassigned' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold text-primary mb-4">Quick Actions</h2>
+        <p class="text-tertiary mb-6">Navigate to main features</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button 
+            (click)="openSprintWorkspace()"
+            class="surface-secondary p-4 rounded-xl border border-primary hover:bg-surface-tertiary transition-all duration-200 text-left hover-lift">
+            <div class="flex items-center space-x-3">
+              <div class="text-2xl">🎯</div>
+              <div>
+                <h3 class="font-medium text-primary">Sprint Workspace</h3>
+                <p class="text-sm text-tertiary">Manage your current sprint stories</p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>
-  </app-card>
-
-  <!-- Quick Actions -->
-  <app-card title="Quick Actions" subtitle="Navigate to main features">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <button 
-        (click)="openSprintWorkspace()"
-        class="p-4 border border-border rounded-lg bg-card hover:bg-surface/50 transition-colors text-left">
-        <div class="flex items-center space-x-3">
-          <div class="text-2xl">🎯</div>
-          <div>
-            <h3 class="font-medium text-text-light">Sprint Workspace</h3>
-            <p class="text-sm text-text-light/70">Manage your current sprint stories</p>
-          </div>
-        </div>
-      </button>
-
-
-    </div>
-  </app-card>
+  </div>
 </div>

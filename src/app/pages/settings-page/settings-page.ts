@@ -7,8 +7,6 @@ import { GitLabService } from '../../services/gitlab';
 import { JiraService } from '../../services/jira';
 import { SlackService } from '../../services/slack';
 import { OpenAiService } from '../../services/openai';
-import { CardComponent } from '../../components/card/card';
-import { ButtonComponent } from '../../components/button/button';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle';
 import { ToastService } from '../../services/toast';
 
@@ -27,7 +25,7 @@ interface Settings {
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent, ButtonComponent, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent],
   templateUrl: './settings-page.html',
   styleUrl: './settings-page.css'
 })

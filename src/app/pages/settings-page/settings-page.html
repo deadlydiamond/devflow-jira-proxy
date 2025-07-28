@@ -1,487 +1,470 @@
-<div>
-  <!-- Theme Settings -->
-  <app-card title="Theme" subtitle="Customize the appearance">
-    <div class="flex items-center justify-between">
-      <div>
-        <h3 class="font-medium text-gray-900 dark:text-text-light">Dark Mode</h3>
-        <p class="text-sm text-gray-600 dark:text-text-light/70">
-          Switch between light and dark themes
-        </p>
-      </div>
-      <app-theme-toggle></app-theme-toggle>
+<div class="min-h-screen bg-primary p-6">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary mb-2">Settings</h1>
+      <p class="text-secondary">Configure your integrations and preferences</p>
     </div>
-  </app-card>
 
-  <!-- GitLab Integration -->
-  <app-card title="GitLab Integration" subtitle="Connect your GitLab account">
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          GitLab URL
-        </label>
-        <input
-          type="url"
-          [(ngModel)]="settings.gitlabUrl"
-          placeholder="https://gitlab.com"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <p class="text-xs text-gray-500 dark:text-text-light/50 mt-1">
-          Your GitLab instance URL (e.g., https://gitlab.com or https://gitlab.yourcompany.com)
-        </p>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          GitLab Access Token
-        </label>
-        <input
-          type="password"
-          [(ngModel)]="settings.gitlabToken"
-          placeholder="Enter your GitLab access token"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div *ngIf="gitlabConnectionStatus !== 'success'" class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Create a personal access token in your GitLab account settings with these scopes:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li><strong>read_user</strong> - Required for connection testing</li>
-            <li><strong>read_api</strong> - Required for API access</li>
-            <li><strong>read_repository</strong> - Required for repository operations</li>
-            <li><strong>write_repository</strong> - Required for creating branches and MRs</li>
-          </ul>
-          <p class="mt-2">
-            <strong>Steps:</strong> Go to GitLab → Settings → Access Tokens → Create token with required scopes
-          </p>
-        </div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          GitLab Project ID
-        </label>
-        <input
-          type="text"
-          [(ngModel)]="settings.gitlabProjectId"
-          placeholder="Enter your GitLab project ID (e.g., 12345)"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Find your project ID in your GitLab project URL:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li>Go to your GitLab project</li>
-            <li>Look at the URL: <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">https://gitlab.com/group/project</code></li>
-            <li>Or check the project page - the ID is usually shown in the project info</li>
-            <li>You can also find it in Project Settings → General → Project ID</li>
-          </ul>
-        </div>
-      </div>
+    <!-- Theme Settings -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">Theme</h2>
+      <p class="text-tertiary mb-6">Customize the appearance</p>
       
-      <!-- Connection Test -->
-      <div class="flex items-center space-x-4">
-        <app-button 
-          (click)="testGitLabConnection()"
-          [disabled]="gitlabConnectionStatus === 'testing'"
-          variant="secondary"
-        >
-          <span *ngIf="gitlabConnectionStatus === 'testing'">Testing...</span>
-          <span *ngIf="gitlabConnectionStatus === 'success'">Test Again</span>
-          <span *ngIf="gitlabConnectionStatus !== 'testing' && gitlabConnectionStatus !== 'success'">Test Connection</span>
-        </app-button>
-        
-        <div *ngIf="gitlabConnectionMessage" class="flex-1">
-          <div 
-            *ngIf="gitlabConnectionStatus === 'success'"
-            class="text-sm text-green-600 dark:text-green-400"
-          >
-            ✅ {{ gitlabConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="gitlabConnectionStatus === 'error'"
-            class="text-sm text-red-600 dark:text-red-400"
-          >
-            ❌ {{ gitlabConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="gitlabConnectionStatus === 'testing'"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
-            🔄 {{ gitlabConnectionMessage }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </app-card>
-
-  <!-- Jira Integration -->
-  <app-card title="Jira Integration" subtitle="Connect your Jira account">
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Jira URL
-        </label>
-        <input
-          type="url"
-          [(ngModel)]="settings.jiraUrl"
-          placeholder="https://your-domain.atlassian.net"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <p class="text-xs text-gray-500 dark:text-text-light/50 mt-1">
-          Your Jira instance URL (e.g., https://your-domain.atlassian.net)
-        </p>
-        <div *ngIf="settings.jiraUrl && !settings.jiraUrl.includes('atlassian.net') && !settings.jiraUrl.includes('jira')" class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-          <p class="text-red-800 dark:text-red-200 font-medium text-xs">⚠️ Invalid Jira URL:</p>
-          <p class="text-red-700 dark:text-red-300 text-xs">
-            This doesn't look like a valid Jira URL. Jira URLs typically contain "atlassian.net" or "jira" in the domain.
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-medium text-primary">Dark Mode</h3>
+          <p class="text-sm text-tertiary">
+            Switch between light and dark themes
           </p>
         </div>
+        <app-theme-toggle></app-theme-toggle>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Jira Email
-        </label>
-        <input
-          type="email"
-          [(ngModel)]="settings.jiraEmail"
-          placeholder="your-email@example.com"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <p class="text-xs text-gray-500 dark:text-text-light/50 mt-1">
-          The email address associated with your Jira account
-        </p>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Jira API Token
-        </label>
-        <input
-          type="password"
-          [(ngModel)]="settings.jiraToken"
-          placeholder="Enter your Jira API token"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div *ngIf="jiraConnectionStatus !== 'success'" class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Generate an API token in your Atlassian account settings:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Atlassian Account Settings</a></li>
-            <li>Click "Create API token"</li>
-            <li>Give it a label (e.g., "DevFlow App")</li>
-            <li>Copy the generated token</li>
-          </ul>
-          <div class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
-            <p class="text-yellow-800 dark:text-yellow-200 font-medium">⚠️ Development Note:</p>
-            <p class="text-yellow-700 dark:text-yellow-300 text-xs">
-              Due to CORS restrictions, testing from localhost may fail. Your credentials are saved correctly. 
-              In production, this will work normally.
+    </div>
+
+    <!-- GitLab Integration -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">GitLab Integration</h2>
+      <p class="text-tertiary mb-6">Connect your GitLab account</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            GitLab URL
+          </label>
+          <input
+            type="url"
+            [(ngModel)]="settings.gitlabUrl"
+            placeholder="https://gitlab.com"
+            class="input w-full"
+          />
+          <p class="text-xs text-quaternary mt-1">
+            Your GitLab instance URL (e.g., https://gitlab.com or https://gitlab.yourcompany.com)
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            GitLab Access Token
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="settings.gitlabToken"
+            placeholder="Enter your GitLab access token"
+            class="input w-full"
+          />
+          <div *ngIf="gitlabConnectionStatus !== 'success'" class="text-xs text-quaternary mt-1 space-y-1">
+            <p>Create a personal access token in your GitLab account settings with these scopes:</p>
+            <ul class="list-disc list-inside ml-2 space-y-1">
+              <li><strong>read_user</strong> - Required for connection testing</li>
+              <li><strong>read_api</strong> - Required for API access</li>
+              <li><strong>read_repository</strong> - Required for repository operations</li>
+              <li><strong>write_repository</strong> - Required for creating branches and MRs</li>
+            </ul>
+            <p class="mt-2">
+              <strong>Steps:</strong> Go to GitLab → Settings → Access Tokens → Create token with required scopes
             </p>
           </div>
         </div>
-      </div>
-      
-      <!-- Connection Test -->
-      <div class="flex items-center space-x-4">
-        <app-button 
-          (click)="testJiraConnection()"
-          [disabled]="jiraConnectionStatus === 'testing'"
-          variant="secondary"
-        >
-          <span *ngIf="jiraConnectionStatus === 'testing'">Testing...</span>
-          <span *ngIf="jiraConnectionStatus === 'success'">Test Again</span>
-          <span *ngIf="jiraConnectionStatus !== 'testing' && jiraConnectionStatus !== 'success'">Test Connection</span>
-        </app-button>
-        
-        <div *ngIf="jiraConnectionMessage" class="flex-1">
-          <div 
-            *ngIf="jiraConnectionStatus === 'success'"
-            class="text-sm text-green-600 dark:text-green-400"
-          >
-            ✅ {{ jiraConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="jiraConnectionStatus === 'error'"
-            class="text-sm text-red-600 dark:text-red-400"
-          >
-            ❌ {{ jiraConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="jiraConnectionStatus === 'testing'"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
-            🔄 {{ jiraConnectionMessage }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </app-card>
-
-  <!-- Slack Integration -->
-  <app-card title="Slack Integration" subtitle="Connect to Slack using Bot Token API">
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Slack Bot Token
-        </label>
-        <input
-          type="password"
-          [(ngModel)]="settings.slackToken"
-          placeholder="xoxb-your-bot-token"
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div *ngIf="slackConnectionStatus !== 'success'" class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Create a Slack app and get a bot token:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">api.slack.com/apps</a></li>
-            <li>Click "Create New App" → "From scratch"</li>
-            <li>Give it a name and select your workspace</li>
-            <li>Go to "OAuth & Permissions" → "Scopes"</li>
-            <li>Add these <strong>Bot Token Scopes</strong> (not User Token Scopes):</li>
-            <ul class="list-disc list-inside ml-4 space-y-1">
-              <li><strong>channels:history</strong> - Read channel messages</li>
-              <li><strong>channels:read</strong> - View channel info</li>
-              <li><strong>users:read</strong> - View user info</li>
-              <li><strong>groups:history</strong> - Read private channel messages (if needed)</li>
-            </ul>
-            <li>Click "Install to Workspace" at the top of the OAuth page</li>
-            <li>Copy the "Bot User OAuth Token" (starts with xoxb-)</li>
-            <li><strong>Important:</strong> Make sure you're using the Bot Token, not the User Token</li>
-          </ul>
-        </div>
-        
-        <!-- Error Message Display -->
-        <div *ngIf="slackConnectionStatus === 'error' && slackConnectionMessage?.includes('missing_scope')" 
-             class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div class="flex items-start space-x-2">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-red-800 dark:text-red-200">Missing Required Scopes</h4>
-              <div class="mt-1 text-sm text-red-700 dark:text-red-300">
-                <p class="mb-2">Your Slack app is missing required permissions. Please:</p>
-                <ol class="list-decimal list-inside space-y-1 ml-2">
-                  <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener" class="underline font-medium">api.slack.com/apps</a></li>
-                  <li>Select your app</li>
-                  <li>Go to "OAuth & Permissions"</li>
-                  <li>Under "Bot Token Scopes", add:</li>
-                  <ul class="list-disc list-inside ml-4 mt-1 space-y-1">
-                    <li><code class="bg-red-100 dark:bg-red-800 px-1 rounded">channels:read</code></li>
-                    <li><code class="bg-red-100 dark:bg-red-800 px-1 rounded">channels:history</code></li>
-                    <li><code class="bg-red-100 dark:bg-red-800 px-1 rounded">users:read</code></li>
-                  </ul>
-                  <li>Click "Install to Workspace" again</li>
-                  <li>Copy the new Bot Token</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          Slack Channel ID
-        </label>
-        <div class="flex space-x-2">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            GitLab Project ID
+          </label>
           <input
             type="text"
-            [(ngModel)]="settings.slackChannelId"
-            placeholder="C1234567890"
-            class="flex-1 p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            [(ngModel)]="settings.gitlabProjectId"
+            placeholder="Enter your GitLab project ID (e.g., 12345)"
+            class="input w-full"
           />
-          <button
-            (click)="fetchSlackChannels()"
-            [disabled]="isFetchingChannels || !settings.slackToken"
-            class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          <div class="text-xs text-quaternary mt-1 space-y-1">
+            <p>Find your project ID in your GitLab project URL:</p>
+            <ul class="list-disc list-inside ml-2 space-y-1">
+              <li>Go to your GitLab project</li>
+              <li>Look at the URL: <code class="bg-surface-secondary px-1 rounded">https://gitlab.com/group/project</code></li>
+              <li>Or check the project page - the ID is usually shown in the project info</li>
+              <li>You can also find it in Project Settings → General → Project ID</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Connection Test -->
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="testGitLabConnection()"
+            [disabled]="gitlabConnectionStatus === 'testing'"
+            class="btn btn-primary"
           >
-            <span *ngIf="isFetchingChannels">Loading...</span>
-            <span *ngIf="!isFetchingChannels">Fetch Channels</span>
+            <span *ngIf="gitlabConnectionStatus === 'testing'">Testing...</span>
+            <span *ngIf="gitlabConnectionStatus === 'success'">Test Again</span>
+            <span *ngIf="gitlabConnectionStatus !== 'testing' && gitlabConnectionStatus !== 'success'">Test Connection</span>
           </button>
-        </div>
-        <p class="text-xs text-gray-500 dark:text-text-light/50 mt-1">
-          Channel ID (e.g., C1234567890) or click "Fetch Channels" to select from list
-        </p>
-        
-        <!-- Channel Selection -->
-        <div *ngIf="slackChannels.length > 0" class="mt-3">
-          <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-            Select Channel:
-          </label>
-          <select
-            (change)="onChannelSelect($event)"
-            class="w-full p-2 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-          >
-            <option value="">Choose a channel...</option>
-            <option 
-              *ngFor="let channel of slackChannels" 
-              [value]="channel.id"
-              [selected]="channel.id === settings.slackChannelId"
+          
+          <div *ngIf="gitlabConnectionMessage" class="flex-1">
+            <div 
+              *ngIf="gitlabConnectionStatus === 'success'"
+              class="text-sm status-success"
             >
-              #{{ channel.name }} ({{ channel.id }})
-            </option>
-          </select>
-        </div>
-      </div>
-      
-      <!-- Connection Test -->
-      <div class="flex items-center space-x-4">
-        <app-button 
-          (click)="testSlackConnection()"
-          [disabled]="slackConnectionStatus === 'testing'"
-          variant="secondary"
-        >
-          <span *ngIf="slackConnectionStatus === 'testing'">Testing...</span>
-          <span *ngIf="slackConnectionStatus === 'success'">Test Again</span>
-          <span *ngIf="slackConnectionStatus !== 'testing' && slackConnectionStatus !== 'success'">Test Connection</span>
-        </app-button>
-        
-        <div *ngIf="slackConnectionMessage" class="flex-1">
-          <div 
-            *ngIf="slackConnectionStatus === 'success'"
-            class="text-sm text-green-600 dark:text-green-400"
-          >
-            ✅ {{ slackConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="slackConnectionStatus === 'error'"
-            class="text-sm text-red-600 dark:text-red-400"
-          >
-            ❌ {{ slackConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="slackConnectionStatus === 'testing'"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
-            🔄 {{ slackConnectionMessage }}
+              ✅ {{ gitlabConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="gitlabConnectionStatus === 'error'"
+              class="text-sm status-error"
+            >
+              ❌ {{ gitlabConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="gitlabConnectionStatus === 'testing'"
+              class="text-sm status-info"
+            >
+              🔄 {{ gitlabConnectionMessage }}
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Polling Controls -->
-      <div class="border-t border-gray-200 dark:border-border pt-4 mt-4">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-text-light mb-3">Message Polling</h4>
-        
-        <div class="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-          <p class="text-green-800 dark:text-green-200 text-xs">
-            <strong>How it works:</strong> The system polls Slack channels every 10-15 seconds to check for new messages. 
-            Deployment-related messages are automatically detected and tracked separately.
-          </p>
-        </div>
-        
       </div>
     </div>
-  </app-card>
 
-  <!-- OpenAI Integration -->
-  <app-card title="OpenAI Integration" subtitle="Configure OpenAI API for AI-powered features">
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-          OpenAI API Token
-        </label>
-        <input
-          type="password"
-          [(ngModel)]="settings.openaiToken"
-          placeholder="sk-..."
-          class="w-full p-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface text-gray-900 dark:text-text-light placeholder-gray-500 dark:placeholder-text-light/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-        <div *ngIf="openaiConnectionStatus !== 'success'" class="text-xs text-gray-500 dark:text-text-light/50 mt-1 space-y-1">
-          <p>Get your OpenAI API token:</p>
-          <ul class="list-disc list-inside ml-2 space-y-1">
-            <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OpenAI Platform</a></li>
-            <li>Sign in to your OpenAI account</li>
-            <li>Click "Create new secret key"</li>
-            <li>Give it a name (e.g., "DevFlow App")</li>
-            <li>Copy the generated token (starts with sk-)</li>
-            <li><strong>Important:</strong> Keep your token secure and never share it</li>
-          </ul>
-          <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
-            <p class="text-blue-800 dark:text-blue-200 font-medium text-xs">AI Features:</p>
-            <p class="text-blue-700 dark:text-blue-300 text-xs">
-              This token enables AI-powered features like task estimation, code review checklists, 
-              test case generation, and smart task suggestions.
+    <!-- Jira Integration -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">Jira Integration</h2>
+      <p class="text-tertiary mb-6">Connect your Jira account</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            Jira URL
+          </label>
+          <input
+            type="url"
+            [(ngModel)]="settings.jiraUrl"
+            placeholder="https://your-domain.atlassian.net"
+            class="input w-full"
+          />
+          <p class="text-xs text-quaternary mt-1">
+            Your Jira instance URL (e.g., https://your-domain.atlassian.net)
+          </p>
+          <div *ngIf="settings.jiraUrl && !settings.jiraUrl.includes('atlassian.net') && !settings.jiraUrl.includes('jira')" class="mt-2 p-2 bg-error-light/20 border border-error-light/30 rounded">
+            <p class="status-error font-medium text-xs">⚠️ Invalid Jira URL:</p>
+            <p class="text-xs text-tertiary">
+              This doesn't look like a valid Jira URL. Jira URLs typically contain "atlassian.net" or "jira" in the domain.
             </p>
           </div>
         </div>
-      </div>
-      
-      <!-- Connection Test -->
-      <div class="flex items-center space-x-4">
-        <app-button 
-          (click)="testOpenAIConnection()"
-          [disabled]="openaiConnectionStatus === 'testing'"
-          variant="secondary"
-        >
-          <span *ngIf="openaiConnectionStatus === 'testing'">Testing...</span>
-          <span *ngIf="openaiConnectionStatus === 'success'">Test Again</span>
-          <span *ngIf="openaiConnectionStatus !== 'testing' && openaiConnectionStatus !== 'success'">Test Connection</span>
-        </app-button>
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            Jira Email
+          </label>
+          <input
+            type="email"
+            [(ngModel)]="settings.jiraEmail"
+            placeholder="your-email@example.com"
+            class="input w-full"
+          />
+          <p class="text-xs text-quaternary mt-1">
+            The email address associated with your Jira account
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            Jira API Token
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="settings.jiraToken"
+            placeholder="Enter your Jira API token"
+            class="input w-full"
+          />
+          <div *ngIf="jiraConnectionStatus !== 'success'" class="text-xs text-quaternary mt-1 space-y-1">
+            <p>Generate an API token in your Atlassian account settings:</p>
+            <ul class="list-disc list-inside ml-2 space-y-1">
+              <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener" class="text-accent-blue hover:underline">Atlassian Account Settings</a></li>
+              <li>Click "Create API token"</li>
+              <li>Give it a label (e.g., "DevFlow App")</li>
+              <li>Copy the generated token</li>
+            </ul>
+            <div class="mt-2 p-2 bg-warning-light/20 border border-warning-light/30 rounded">
+              <p class="status-warning font-medium text-xs">⚠️ Development Note:</p>
+              <p class="text-xs text-tertiary">
+                Due to CORS restrictions, testing from localhost may fail. Your credentials are saved correctly. 
+                In production, this will work normally.
+              </p>
+            </div>
+          </div>
+        </div>
         
-        <div *ngIf="openaiConnectionMessage" class="flex-1">
-          <div 
-            *ngIf="openaiConnectionStatus === 'success'"
-            class="text-sm text-green-600 dark:text-green-400"
+        <!-- Connection Test -->
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="testJiraConnection()"
+            [disabled]="jiraConnectionStatus === 'testing'"
+            class="btn btn-primary"
           >
-            ✅ {{ openaiConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="openaiConnectionStatus === 'error'"
-            class="text-sm text-red-600 dark:text-red-400"
-          >
-            ❌ {{ openaiConnectionMessage }}
-          </div>
-          <div 
-            *ngIf="openaiConnectionStatus === 'testing'"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
-            🔄 {{ openaiConnectionMessage }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </app-card>
-
-  <!-- Storage Information -->
-  <app-card title="Storage Information" subtitle="Local data usage">
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-gray-600 dark:text-text-light/70">Storage Used:</span>
-        <span class="font-medium text-gray-900 dark:text-text-light">
-          {{ formatBytes(getStorageInfo().size) }}
-        </span>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-gray-600 dark:text-text-light/70">Stored Keys:</span>
-        <span class="font-medium text-gray-900 dark:text-text-light">
-          {{ getStorageInfo().keys.length }}
-        </span>
-      </div>
-      <div *ngIf="getStorageInfo().keys.length > 0" class="mt-4">
-        <h4 class="text-sm font-medium text-gray-700 dark:text-text-light mb-2">Stored Data:</h4>
-        <div class="space-y-1">
-          <div 
-            *ngFor="let key of getStorageInfo().keys"
-            class="text-xs text-gray-500 dark:text-text-light/50 font-mono"
-          >
-            {{ key }}
+            <span *ngIf="jiraConnectionStatus === 'testing'">Testing...</span>
+            <span *ngIf="jiraConnectionStatus === 'success'">Test Again</span>
+            <span *ngIf="jiraConnectionStatus !== 'testing' && jiraConnectionStatus !== 'success'">Test Connection</span>
+          </button>
+          
+          <div *ngIf="jiraConnectionMessage" class="flex-1">
+            <div 
+              *ngIf="jiraConnectionStatus === 'success'"
+              class="text-sm status-success"
+            >
+              ✅ {{ jiraConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="jiraConnectionStatus === 'error'"
+              class="text-sm status-error"
+            >
+              ❌ {{ jiraConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="jiraConnectionStatus === 'testing'"
+              class="text-sm status-info"
+            >
+              🔄 {{ jiraConnectionMessage }}
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </app-card>
 
-  <!-- Actions -->
-  <div class="flex items-center justify-between">
-    <app-button 
-      (click)="saveSettings()"
-      variant="primary"
-    >
-      Save Settings
-    </app-button>
-    
-    <app-button 
-      (click)="clearAllData()"
-      variant="secondary"
-      class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-    >
-      Clear All Data
-    </app-button>
+    <!-- Slack Integration -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">Slack Integration</h2>
+      <p class="text-tertiary mb-6">Connect to Slack using Bot Token API</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            Slack Bot Token
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="settings.slackToken"
+            placeholder="xoxb-your-bot-token"
+            class="input w-full"
+          />
+          <div *ngIf="slackConnectionStatus !== 'success'" class="text-xs text-quaternary mt-1 space-y-1">
+            <p>Create a Slack app and get a bot token:</p>
+            <ul class="list-disc list-inside ml-2 space-y-1">
+              <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener" class="text-accent-blue hover:underline">api.slack.com/apps</a></li>
+              <li>Click "Create New App" → "From scratch"</li>
+              <li>Give it a name and select your workspace</li>
+              <li>Go to "OAuth & Permissions" → "Scopes"</li>
+              <li>Add these <strong>Bot Token Scopes</strong> (not User Token Scopes):</li>
+              <ul class="list-disc list-inside ml-4 space-y-1">
+                <li><strong>channels:history</strong> - Read channel messages</li>
+                <li><strong>channels:read</strong> - View channel info</li>
+                <li><strong>users:read</strong> - View user info</li>
+                <li><strong>groups:history</strong> - Read private channel messages (if needed)</li>
+              </ul>
+              <li>Click "Install to Workspace" at the top of the OAuth page</li>
+              <li>Copy the "Bot User OAuth Token" (starts with xoxb-)</li>
+              <li><strong>Important:</strong> Make sure you're using the Bot Token, not the User Token</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            Slack Channel ID
+          </label>
+          <div class="flex space-x-2">
+            <input
+              type="text"
+              [(ngModel)]="settings.slackChannelId"
+              placeholder="C1234567890"
+              class="input flex-1"
+            />
+            <button
+              (click)="fetchSlackChannels()"
+              [disabled]="isFetchingChannels || !settings.slackToken"
+              class="btn btn-info"
+            >
+              <span *ngIf="isFetchingChannels">Loading...</span>
+              <span *ngIf="!isFetchingChannels">Fetch Channels</span>
+            </button>
+          </div>
+          <p class="text-xs text-quaternary mt-1">
+            Channel ID (e.g., C1234567890) or click "Fetch Channels" to select from list
+          </p>
+          
+          <!-- Channel Selection -->
+          <div *ngIf="slackChannels.length > 0" class="mt-3">
+            <label class="block text-sm font-medium text-secondary mb-2">
+              Select Channel:
+            </label>
+            <select
+              (change)="onChannelSelect($event)"
+              class="input w-full"
+              aria-label="Select Slack channel"
+            >
+              <option value="" class="bg-surface-secondary text-primary">Choose a channel...</option>
+              <option 
+                *ngFor="let channel of slackChannels" 
+                [value]="channel.id"
+                [selected]="channel.id === settings.slackChannelId"
+                class="bg-surface-secondary text-primary"
+              >
+                #{{ channel.name }} ({{ channel.id }})
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Connection Test -->
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="testSlackConnection()"
+            [disabled]="slackConnectionStatus === 'testing'"
+            class="btn btn-primary"
+          >
+            <span *ngIf="slackConnectionStatus === 'testing'">Testing...</span>
+            <span *ngIf="slackConnectionStatus === 'success'">Test Again</span>
+            <span *ngIf="slackConnectionStatus !== 'testing' && slackConnectionStatus !== 'success'">Test Connection</span>
+          </button>
+          
+          <div *ngIf="slackConnectionMessage" class="flex-1">
+            <div 
+              *ngIf="slackConnectionStatus === 'success'"
+              class="text-sm status-success"
+            >
+              ✅ {{ slackConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="slackConnectionStatus === 'error'"
+              class="text-sm status-error"
+            >
+              ❌ {{ slackConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="slackConnectionStatus === 'testing'"
+              class="text-sm status-info"
+            >
+              🔄 {{ slackConnectionMessage }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OpenAI Integration -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">OpenAI Integration</h2>
+      <p class="text-tertiary mb-6">Configure OpenAI API for AI-powered features</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">
+            OpenAI API Token
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="settings.openaiToken"
+            placeholder="sk-..."
+            class="input w-full"
+          />
+          <div *ngIf="openaiConnectionStatus !== 'success'" class="text-xs text-quaternary mt-1 space-y-1">
+            <p>Get your OpenAI API token:</p>
+            <ul class="list-disc list-inside ml-2 space-y-1">
+              <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="text-accent-blue hover:underline">OpenAI Platform</a></li>
+              <li>Sign in to your OpenAI account</li>
+              <li>Click "Create new secret key"</li>
+              <li>Give it a name (e.g., "DevFlow App")</li>
+              <li>Copy the generated token (starts with sk-)</li>
+              <li><strong>Important:</strong> Keep your token secure and never share it</li>
+            </ul>
+            <div class="mt-2 p-2 bg-info-light/20 border border-info-light/30 rounded">
+              <p class="status-info font-medium text-xs">AI Features:</p>
+              <p class="text-xs text-tertiary">
+                This token enables AI-powered features like task estimation, code review checklists, 
+                test case generation, and smart task suggestions.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Connection Test -->
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="testOpenAIConnection()"
+            [disabled]="openaiConnectionStatus === 'testing'"
+            class="btn btn-primary"
+          >
+            <span *ngIf="openaiConnectionStatus === 'testing'">Testing...</span>
+            <span *ngIf="openaiConnectionStatus === 'success'">Test Again</span>
+            <span *ngIf="openaiConnectionStatus !== 'testing' && openaiConnectionStatus !== 'success'">Test Connection</span>
+          </button>
+          
+          <div *ngIf="openaiConnectionMessage" class="flex-1">
+            <div 
+              *ngIf="openaiConnectionStatus === 'success'"
+              class="text-sm status-success"
+            >
+              ✅ {{ openaiConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="openaiConnectionStatus === 'error'"
+              class="text-sm status-error"
+            >
+              ❌ {{ openaiConnectionMessage }}
+            </div>
+            <div 
+              *ngIf="openaiConnectionStatus === 'testing'"
+              class="text-sm status-info"
+            >
+              🔄 {{ openaiConnectionMessage }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Storage Information -->
+    <div class="card p-6">
+      <h2 class="text-xl font-semibold text-primary mb-4">Storage Information</h2>
+      <p class="text-tertiary mb-6">Local data usage</p>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-tertiary">Storage Used:</span>
+          <span class="font-medium text-primary">
+            {{ formatBytes(getStorageInfo().size) }}
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-tertiary">Stored Keys:</span>
+          <span class="font-medium text-primary">
+            {{ getStorageInfo().keys.length }}
+          </span>
+        </div>
+        <div *ngIf="getStorageInfo().keys.length > 0" class="mt-4">
+          <h4 class="text-sm font-medium text-secondary mb-2">Stored Data:</h4>
+          <div class="space-y-1">
+            <div 
+              *ngFor="let key of getStorageInfo().keys"
+              class="text-xs text-quaternary font-mono"
+            >
+              {{ key }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between">
+      <button 
+        (click)="saveSettings()"
+        class="btn btn-primary"
+      >
+        Save Settings
+      </button>
+      
+      <button 
+        (click)="clearAllData()"
+        class="btn btn-error"
+      >
+        Clear All Data
+      </button>
+    </div>
   </div>
 </div>

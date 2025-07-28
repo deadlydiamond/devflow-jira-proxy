@@ -1,153 +1,183 @@
-<div class="min-h-screen bg-white dark:bg-surface text-gray-900 dark:text-text-light">
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white dark:bg-card border-b border-gray-200 dark:border-border">
-    <div class="flex items-center justify-between px-6 py-4">
-      <!-- Left side: Logo and mobile menu button -->
-      <div class="flex items-center space-x-4">
-        <button
-          (click)="toggleSidebar()"
-          class="lg:hidden p-2 rounded-lg hover:bg-surface transition-colors"
-          aria-label="Toggle sidebar"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
+<div class="min-h-screen bg-primary flex">
+  <!-- Sidebar -->
+  <div class="w-64 bg-secondary border-r border-primary flex flex-col">
+    <!-- Logo -->
+    <div class="p-6 border-b border-primary">
+      <h1 class="text-2xl font-bold text-primary">DevFlow</h1>
+    </div>
 
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span class="text-white font-semibold text-sm">D</span>
-          </div>
-          <h1 class="text-xl font-semibold text-gray-900 dark:text-text-light">Devflow</h1>
+    <!-- Navigation -->
+    <nav class="flex-1 p-4 space-y-2">
+      <a 
+        routerLink="/dashboard" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+
+      <a 
+        routerLink="/sprint-workspace" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <span>Sprint Workspace</span>
+      </a>
+
+      <a 
+        routerLink="/tasks" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+        </svg>
+        <span>Tasks</span>
+      </a>
+
+      <a 
+        routerLink="/deployment-tracking" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>Deployment Tracking</span>
+      </a>
+
+      <a 
+        routerLink="/squad-management" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        <span>Squad Management</span>
+      </a>
+
+      <a 
+        routerLink="/settings" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span>Settings</span>
+      </a>
+
+      <!-- Superadmin Panel Link (only for superadmin users) -->
+      <a 
+        *ngIf="isSuperadmin()"
+        routerLink="/superadmin" 
+        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <span>Superadmin Panel</span>
+      </a>
+    </nav>
+
+    <!-- User Info -->
+    <div class="p-4 border-t border-primary">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center">
+          <span class="text-sm font-medium text-primary">{{ userInitials() }}</span>
         </div>
-      </div>
-
-      <!-- Center: Page title and description -->
-      <div class="hidden md:flex flex-col items-center">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-text-light">{{ activePageTitle() }}</h2>
-        <p class="text-sm text-gray-600 dark:text-text-light/70">{{ getPageDescription() }}</p>
-      </div>
-
-      <!-- Right side: Page actions and theme toggle -->
-      <div class="flex items-center space-x-4">
-        <!-- Theme toggle -->
-        <app-theme-toggle></app-theme-toggle>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-primary truncate">{{ userName() }}</p>
+          <p class="text-xs text-tertiary truncate">{{ userEmail() }}</p>
+        </div>
       </div>
     </div>
-  </header>
+  </div>
 
-  <!-- Main layout -->
-  <div class="flex">
-    <!-- Sidebar -->
-    <aside
-      class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-card border-r border-gray-200 dark:border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
-      [class.translate-x-0]="sidebarOpen()"
-      [class.-translate-x-full]="!sidebarOpen()"
-    >
-      <div class="flex flex-col h-full">
-        <!-- Sidebar header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-border lg:hidden">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-text-light">Navigation</h2>
-          <button
-            (click)="toggleSidebar()"
-            class="p-2 rounded-lg hover:bg-surface transition-colors"
-            aria-label="Close sidebar"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-secondary border-b border-primary px-6 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Left side: Page title and breadcrumb -->
+        <div>
+          <h1 class="text-xl font-semibold text-primary">{{ activePageTitle() }}</h1>
+          <p class="text-sm text-tertiary">{{ getPageDescription() }}</p>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex-1 px-6 py-4 space-y-2">
-          <a
-            routerLink="/dashboard"
-            routerLinkActive="bg-primary/10 text-primary border-primary/20"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-text-light hover:bg-gray-100 dark:hover:bg-surface transition-colors border border-transparent"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
-            </svg>
-            <span>Dashboard</span>
-          </a>
+        <!-- Right side: Page actions and theme toggle -->
+        <div class="flex items-center space-x-4">
+          <!-- Theme toggle -->
+          <app-theme-toggle></app-theme-toggle>
 
-          <a
-            routerLink="/sprint-workspace"
-            routerLinkActive="bg-primary/10 text-primary border-primary/20"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-text-light hover:bg-gray-100 dark:hover:bg-surface transition-colors border border-transparent"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-            </svg>
-            <span>Sprint Workspace</span>
-          </a>
+          <!-- User Avatar Dropdown -->
+          <div class="relative user-dropdown">
+            <button
+              (click)="toggleUserDropdown()"
+              class="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-surface-tertiary transition-all duration-200 border border-primary"
+              aria-label="User menu"
+            >
+              <span class="text-sm font-semibold text-primary">{{ userInitials() }}</span>
+            </button>
 
-          <a
-            routerLink="/deployment-tracker"
-            routerLinkActive="bg-primary/10 text-primary border-primary/20"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-text-light hover:bg-gray-100 dark:hover:bg-surface transition-colors border border-transparent"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-            </svg>
-            <span>Deployment Tracker</span>
-          </a>
+            <!-- User Dropdown Menu -->
+            <div
+              *ngIf="userDropdownOpen()"
+              class="absolute right-0 mt-2 w-64 glass rounded-lg shadow-xl border border-primary z-50"
+            >
+              <div class="p-4 border-b border-primary">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-surface-elevated rounded-full flex items-center justify-center">
+                    <span class="text-sm font-semibold text-primary">{{ userInitials() }}</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-primary truncate">{{ userName() }}</p>
+                    <p class="text-xs text-tertiary truncate">{{ userEmail() }}</p>
+                  </div>
+                </div>
+              </div>
 
-          <a
-            routerLink="/merge-reviewer"
-            routerLinkActive="bg-primary/10 text-primary border-primary/20"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-text-light hover:bg-gray-100 dark:hover:bg-surface transition-colors border border-transparent"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>Merge Reviewer</span>
-          </a>
+              <div class="py-2">
+                <a
+                  routerLink="/settings"
+                  class="flex items-center px-4 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200"
+                >
+                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Settings
+                </a>
 
-          <a
-            routerLink="/settings"
-            routerLinkActive="bg-primary/10 text-primary border-primary/20"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-text-light hover:bg-gray-100 dark:hover:bg-surface transition-colors border border-transparent"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <span>Settings</span>
-          </a>
-
-
-        </nav>
-
-        <!-- Sidebar footer -->
-        <div class="p-6 border-t border-gray-200 dark:border-border">
-          <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-              <span class="text-white font-semibold text-sm">{{ userInitials() }}</span>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900 dark:text-text-light truncate">{{ userName() }}</p>
-              <p class="text-xs text-gray-600 dark:text-text-light/70 truncate">{{ userEmail() }}</p>
+                <button
+                  (click)="logout()"
+                  class="w-full flex items-center px-4 py-2 text-sm text-error-light hover:text-error-dark hover:bg-surface-primary transition-all duration-200"
+                >
+                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </aside>
+    </header>
 
-    <!-- Overlay for mobile -->
-    <div
-      *ngIf="sidebarOpen()"
-      (click)="toggleSidebar()"
-      class="fixed inset-0 z-30 bg-black/50 lg:hidden"
-    ></div>
-
-    <!-- Main content -->
-    <main class="flex-1 min-h-screen">
-      <div class="p-6">
-        <router-outlet></router-outlet>
-      </div>
+    <!-- Page Content -->
+    <main class="flex-1 bg-primary p-6 overflow-auto">
+      <ng-content></ng-content>
     </main>
   </div>
 </div>

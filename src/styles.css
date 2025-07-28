@@ -1,3 +1,4 @@
+@import './styles/colors.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,18 +10,22 @@
   }
   
   body {
-    @apply bg-white text-gray-900 dark:bg-surface dark:text-text-light transition-colors duration-200;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: var(--transition-normal);
   }
   
   /* Ensure proper color scheme */
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
   
-  :root.dark {
+  /* Dark theme by default */
+  :root {
     color-scheme: dark;
   }
 }
+
 /* Button utilities */
 @layer components {
   .btn {
@@ -28,19 +33,63 @@
   }
   
   .btn-primary {
-    @apply bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20;
+    background-color: var(--accent-blue);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-blue);
+    transition: var(--transition-normal);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--accent-blue-hover);
+    border-color: var(--accent-blue-hover);
   }
   
   .btn-success {
-    @apply bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20;
+    background-color: var(--accent-green);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-green);
+    transition: var(--transition-normal);
+  }
+  
+  .btn-success:hover {
+    background-color: var(--accent-green-hover);
+    border-color: var(--accent-green-hover);
   }
   
   .btn-info {
-    @apply bg-blue-500/10 text-blue-600 border border-blue-500/20 hover:bg-blue-500/20;
+    background-color: var(--accent-blue);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-blue);
+    transition: var(--transition-normal);
+  }
+  
+  .btn-info:hover {
+    background-color: var(--accent-blue-hover);
+    border-color: var(--accent-blue-hover);
   }
   
   .btn-warning {
-    @apply bg-orange-500/10 text-orange-600 border border-orange-500/20 hover:bg-orange-500/20;
+    background-color: var(--accent-yellow);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-yellow);
+    transition: var(--transition-normal);
+  }
+  
+  .btn-warning:hover {
+    background-color: var(--accent-yellow-hover);
+    border-color: var(--accent-yellow-hover);
+  }
+  
+  .btn-error {
+    background-color: var(--accent-red);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-red);
+    transition: var(--transition-normal);
+  }
+  
+  .btn-error:hover {
+    background-color: var(--accent-red-hover);
+    border-color: var(--accent-red-hover);
   }
   
   /* Badge utilities */
@@ -49,19 +98,56 @@
   }
   
   .badge-success {
-    @apply bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400;
+    background-color: var(--success-light);
+    color: var(--text-primary);
   }
   
   .badge-info {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400;
+    background-color: var(--info-light);
+    color: var(--text-primary);
   }
   
   .badge-warning {
-    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400;
+    background-color: var(--warning-light);
+    color: var(--text-primary);
   }
   
   .badge-error {
-    @apply bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400;
+    background-color: var(--error-light);
+    color: var(--text-primary);
+  }
+  
+  /* Card utilities */
+  .card {
+    background-color: var(--surface-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 0.75rem;
+    transition: var(--transition-normal);
+  }
+  
+  .card:hover {
+    border-color: var(--border-secondary);
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Input utilities */
+  .input {
+    background-color: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: var(--transition-normal);
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: var(--focus-ring);
+  }
+  
+  .input::placeholder {
+    color: var(--text-quaternary);
   }
 }
 

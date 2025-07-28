@@ -1,0 +1,253 @@
+<div class="min-h-screen bg-primary">
+  <!-- Header -->
+  <div class="bg-secondary border-b border-primary">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div>
+          <h1 class="text-3xl font-bold text-primary">Superadmin Panel</h1>
+          <p class="text-secondary">Manage users and system settings</p>
+        </div>
+        <button
+          (click)="openAddUserModal()"
+          class="btn btn-primary flex items-center space-x-3"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          <span>Add User</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="card p-6 hover:bg-surface-tertiary transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-info-light/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 status-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-tertiary">Total Users</p>
+            <p class="text-2xl font-bold text-primary">{{ users().length }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6 hover:bg-surface-tertiary transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-success-light/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 status-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-tertiary">Active Users</p>
+            <p class="text-2xl font-bold text-primary">{{ getActiveUsersCount() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6 hover:bg-surface-tertiary transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-warning-light/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 status-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-tertiary">2FA Enabled</p>
+            <p class="text-2xl font-bold text-primary">{{ get2FAEnabledCount() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6 hover:bg-surface-tertiary transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-accent-purple/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-tertiary">Leads</p>
+            <p class="text-2xl font-bold text-primary">{{ getRoleCount(UserRole.LEAD) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card overflow-hidden">
+      <div class="px-6 py-4 border-b border-primary">
+        <h2 class="text-xl font-semibold text-primary">User Management</h2>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-surface-secondary">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">User</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">Role</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">2FA</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">Created</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-tertiary uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-primary">
+            <tr *ngFor="let user of users()" class="hover:bg-surface-secondary transition-colors duration-200">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center">
+                    <span class="text-sm font-medium text-primary">
+                      {{ getUserInitials(user.name) }}
+                    </span>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-primary">{{ user.name }}</div>
+                    <div class="text-sm text-tertiary">{{ user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full glass-light text-primary">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full"
+                      [class]="user.is_active ? 'bg-success-light/20 text-success-light border border-success-light/30' : 'bg-error-light/20 text-error-light border border-error-light/30'">
+                  {{ user.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full"
+                      [class]="user.two_factor_enabled ? 'bg-info-light/20 text-info-light border border-info-light/30' : 'bg-quaternary/20 text-quaternary border border-quaternary/30'">
+                  {{ user.two_factor_enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-tertiary">
+                {{ formatDate(user.created_at) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex space-x-3">
+                  <button
+                    (click)="editUser(user)"
+                    class="text-secondary hover:text-primary transition-colors duration-200"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    (click)="deleteUser(user)"
+                    class="text-error-light hover:text-error-dark transition-colors duration-200"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit User Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay">
+    <div class="card max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-primary">
+          {{ isEditing() ? 'Edit User' : 'Add New User' }}
+        </h3>
+        <button
+          (click)="closeModal()"
+          class="text-quaternary hover:text-secondary transition-colors duration-200"
+          aria-label="Close modal"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">Name</label>
+          <input
+            type="text"
+            formControlName="name"
+            class="input w-full"
+            placeholder="Enter full name"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">Email</label>
+          <input
+            type="email"
+            formControlName="email"
+            class="input w-full"
+            placeholder="Enter email address"
+          />
+        </div>
+
+        <div *ngIf="!isEditing()">
+          <label class="block text-sm font-medium text-secondary mb-2">Password</label>
+          <input
+            type="password"
+            formControlName="password"
+            class="input w-full"
+            placeholder="Enter password"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-secondary mb-2">Role</label>
+          <select
+            formControlName="role"
+            class="input w-full"
+            aria-label="Select user role"
+          >
+            <option value="" class="bg-surface-secondary text-primary">Select role</option>
+            <option [value]="UserRole.SUPERADMIN" class="bg-surface-secondary text-primary">Superadmin</option>
+            <option [value]="UserRole.LEAD" class="bg-surface-secondary text-primary">Lead</option>
+            <option [value]="UserRole.ENGINEER" class="bg-surface-secondary text-primary">Engineer</option>
+            <option [value]="UserRole.PO" class="bg-surface-secondary text-primary">Product Owner</option>
+          </select>
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="checkbox"
+            formControlName="is_active"
+            class="w-4 h-4 text-accent-blue border-primary rounded focus:ring-accent-blue"
+            aria-label="Active user checkbox"
+          />
+          <label class="ml-2 text-sm text-secondary">Active User</label>
+        </div>
+
+        <div class="flex space-x-3 pt-4">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="flex-1 btn btn-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="!userForm.valid || isLoading()"
+            class="flex-1 btn btn-primary"
+          >
+            {{ isEditing() ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 
