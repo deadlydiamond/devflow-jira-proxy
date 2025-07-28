@@ -10,7 +10,7 @@
     <nav class="flex-1 p-4 space-y-2">
       <a 
         routerLink="/dashboard" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -22,7 +22,7 @@
 
       <a 
         routerLink="/sprint-workspace" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
 
       <a 
         routerLink="/tasks" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@
 
       <a 
         routerLink="/deployment-tracking" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
 
       <a 
         routerLink="/squad-management" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@
 
       <a 
         routerLink="/settings" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@
       <a 
         *ngIf="isSuperadmin()"
         routerLink="/superadmin" 
-        routerLinkActive="bg-surface-elevated text-primary border-accent"
+        routerLinkActive="bg-surface-secondary text-primary border-primary"
         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary hover:text-primary hover:bg-surface-primary transition-all duration-200 border border-transparent"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@
     <!-- User Info -->
     <div class="p-4 border-t border-primary">
       <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center">
+        <div class="w-8 h-8 bg-surface-secondary rounded-full flex items-center justify-center">
           <span class="text-sm font-medium text-primary">{{ userInitials() }}</span>
         </div>
         <div class="flex-1 min-w-0">
@@ -124,7 +124,7 @@
           <div class="relative user-dropdown">
             <button
               (click)="toggleUserDropdown()"
-              class="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-surface-tertiary transition-all duration-200 border border-primary"
+              class="w-8 h-8 bg-surface-secondary rounded-full flex items-center justify-center hover:bg-surface-tertiary transition-all duration-200 border border-primary"
               aria-label="User menu"
             >
               <span class="text-sm font-semibold text-primary">{{ userInitials() }}</span>
@@ -137,7 +137,7 @@
             >
               <div class="p-4 border-b border-primary">
                 <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 bg-surface-elevated rounded-full flex items-center justify-center">
+                  <div class="w-10 h-10 bg-surface-secondary rounded-full flex items-center justify-center">
                     <span class="text-sm font-semibold text-primary">{{ userInitials() }}</span>
                   </div>
                   <div class="flex-1 min-w-0">
